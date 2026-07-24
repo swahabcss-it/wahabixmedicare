@@ -1,0 +1,119 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ clinic.name }} — Super Admin View{% endblock %}
+{% block page_title %}{{ clinic.name }}{% endblock %}
+{% block page_subtitle %}Viewing as Super Admin — Full Access Mode{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'superadmin:clinic_exit' %}" class="btn btn-danger btn-sm" data-confirm="Exit clinic view and return to Super Admin dashboard?">🚪 Exit Clinic View</a>
+{% endblock %}
+
+{% block content %}
+<!-- SA BANNER -->
+<div class="alert alert-warning" style="border-left:4px solid var(--warning);font-size:13.5px;">
+  ⚡ <strong>Super Admin Mode</strong> — You are operating inside
+  <strong>{{ clinic.name }}</strong> with full access to all enabled modules.
+  Changes you make here are real and affect live clinic data.
+  <a href="{% url 'superadmin:clinic_exit' %}" style="margin-left:16px;font-weight:700;color:var(--warning);">
+    Exit ↗
+  </a>
+</div>
+
+<!-- CLINIC INFO -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header">
+    <div>
+      <div class="card-title">🏥 {{ clinic.name }}</div>
+      <div class="card-subtitle">{{ clinic.address }}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="badge {% if clinic.plan == 'enterprise' %}badge-teal{% elif clinic.plan == 'professional' %}badge-blue{% else %}badge-gray{% endif %}">
+        {{ clinic.get_plan_display }} Plan
+      </span>
+      <span class="badge {% if clinic.is_active %}badge-green{% else %}badge-red{% endif %}">
+        {% if clinic.is_active %}Active{% else %}Inactive{% endif %}
+      </span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);">
+    <div style="background:var(--bg-card);padding:14px 18px;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Phone</div>
+      <div style="font-size:14px;font-weight:600;margin-top:2px;">{{ clinic.phone }}</div>
+    </div>
+    <div style="background:var(--bg-card);padding:14px 18px;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Email</div>
+      <div style="font-size:14px;font-weight:600;margin-top:2px;">{{ clinic.email|default:"—" }}</div>
+    </div>
+    <div style="background:var(--bg-card);padding:14px 18px;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Plan Expires</div>
+      <div style="font-size:14px;font-weight:600;margin-top:2px;">{{ clinic.plan_expires|date:"d M Y"|default:"No Expiry" }}</div>
+    </div>
+    <div style="background:var(--bg-card);padding:14px 18px;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Slug</div>
+      <div style="font-size:14px;font-weight:600;margin-top:2px;font-family:monospace;">{{ clinic.slug }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE QUICK-LAUNCH GRID -->
+<div style="margin-bottom:10px;font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Available Modules</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">
+
+  {% if nav_show_reception %}
+  <a href="{% url 'reception:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(14,165,233,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏪</div>
+    <div><div style="font-weight:700;font-size:15px;">Reception</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Patients & Tokens</div></div>
+  </a>
+  {% endif %}
+
+  {% if nav_show_doctor %}
+  <a href="{% url 'doctor:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(16,185,129,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">👨‍⚕️</div>
+    <div><div style="font-weight:700;font-size:15px;">Doctor</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Queue & Prescriptions</div></div>
+  </a>
+  {% endif %}
+
+  {% if nav_show_lab %}
+  <a href="{% url 'laboratory:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🔬</div>
+    <div><div style="font-weight:700;font-size:15px;">Laboratory</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Tests & Results</div></div>
+  </a>
+  {% endif %}
+
+  {% if nav_show_pharmacy %}
+  <a href="{% url 'pharmacy:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💊</div>
+    <div><div style="font-weight:700;font-size:15px;">Pharmacy</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Medicines & Sales</div></div>
+  </a>
+  {% endif %}
+
+  {% if nav_show_hr %}
+  <a href="{% url 'hr_payroll:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">👥</div>
+    <div><div style="font-weight:700;font-size:15px;">HR & Payroll</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Employees & Slips</div></div>
+  </a>
+  {% endif %}
+
+  {% if nav_show_billing %}
+  <a href="{% url 'billing:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(0,212,170,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💳</div>
+    <div><div style="font-weight:700;font-size:15px;">Billing</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Invoices & Accounts</div></div>
+  </a>
+  {% endif %}
+
+  <!-- Always: Clinic Management -->
+  <a href="{% url 'clinic_admin:dashboard' %}" class="card" style="text-decoration:none;padding:22px;display:flex;align-items:center;gap:16px;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+    <div style="width:52px;height:52px;border-radius:10px;background:rgba(14,165,233,.12);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏢</div>
+    <div><div style="font-weight:700;font-size:15px;">Clinic Admin</div><div style="font-size:12px;color:var(--text-faint);margin-top:2px;">Staff & Settings</div></div>
+  </a>
+
+</div>
+
+<!-- QUICK ADMIN LINKS -->
+<div style="display:flex;gap:12px;">
+  <a href="{% url 'superadmin:clinic_detail' clinic.pk %}" class="btn btn-secondary btn-sm">📊 Clinic Analytics</a>
+  <a href="{% url 'superadmin:clinic_edit' clinic.pk %}" class="btn btn-secondary btn-sm">✏️ Edit Clinic</a>
+  <a href="{% url 'superadmin:staff_list' %}" class="btn btn-secondary btn-sm">👥 All Staff</a>
+  <a href="{% url 'superadmin:clinic_exit' %}" class="btn btn-danger btn-sm">🚪 Exit Clinic View</a>
+</div>
+
+{% endblock %}

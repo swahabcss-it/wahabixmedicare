@@ -1,0 +1,40 @@
+{% extends 'base/base.html' %}
+{% block title %}General Ledger{% endblock %}
+{% block nav_billing %}active{% endblock %}
+{% block page_title %}Autonomous General Ledger{% endblock %}
+{% block page_subtitle %}Every cleared transaction auto-routes here — Debit Cash Vault ↔ Credit Revenue{% endblock %}
+{% block topbar_actions %}<a href="{% url 'billing:ledger_pdf' %}{% if selected_account %}?account={{ selected_account }}{% endif %}" class="btn btn-secondary btn-sm" target="_blank">👁️ View PDF</a> <a href="{% url 'billing:ledger_pdf' %}?download=1{% if selected_account %}&account={{ selected_account }}{% endif %}" class="btn btn-success btn-sm">⬇️ Download PDF</a> <button type="button" class="btn btn-primary btn-sm" onclick="wmsSilentPrint('{% url 'billing:ledger_pdf' %}{% if selected_account %}?account={{ selected_account }}{% endif %}')">🖨️ Print</button> <a href="{% url 'billing:dashboard' %}" class="btn btn-secondary btn-sm">Back</a>{% endblock %}
+{% block content %}
+<div style="display:flex;gap:16px;margin-bottom:16px;">
+  <div class="card" style="flex:1;margin:0;padding:14px;"><div style="font-size:11px;color:var(--text-faint);">Total Debit</div><div style="font-size:20px;font-weight:700;color:var(--success);">Rs.{{ total_debit|floatformat:0 }}</div></div>
+  <div class="card" style="flex:1;margin:0;padding:14px;"><div style="font-size:11px;color:var(--text-faint);">Total Credit</div><div style="font-size:20px;font-weight:700;color:var(--accent);">Rs.{{ total_credit|floatformat:0 }}</div></div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">📒 Ledger Entries</div>
+    <form method="GET">
+      <select name="account" class="form-control" style="width:220px;" onchange="this.form.submit()">
+        <option value="">All Accounts</option>
+        {% for key, label in accounts %}<option value="{{ key }}" {% if key == selected_account %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Account</th><th style="text-align:center;">Type</th><th class="th-num">Amount</th><th>Reference</th><th>Description</th></tr></thead>
+      <tbody>
+        {% for e in entries %}
+        <tr>
+          <td class="td-nowrap" style="font-size:12px;color:var(--text-faint);">{{ e.date }}</td>
+          <td class="td-primary">{{ e.get_account_display }}</td>
+          <td style="text-align:center;"><span class="badge {% if e.entry_type == 'debit' %}badge-green{% else %}badge-blue{% endif %}">{{ e.get_entry_type_display }}</span></td>
+          <td class="td-num">Rs.{{ e.amount|floatformat:2 }}</td>
+          <td class="td-mono">{{ e.reference }}</td>
+          <td style="font-size:12px;color:var(--text-faint);">{{ e.description }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="6" style="color:var(--text-faint);">No ledger entries yet — they auto-post when invoices/sales are marked paid.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

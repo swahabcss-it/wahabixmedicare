@@ -1,0 +1,42 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ action }} Medicine{% endblock %}
+{% block nav_medicines %}active{% endblock %}
+{% block page_title %}{{ action }} Medicine{% endblock %}
+{% block page_subtitle %}Manage pharmacy stock item{% endblock %}
+{% block topbar_actions %}<a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-header"><div class="card-title">💊 Medicine Details</div></div>
+  <form method="POST" id="med-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Medicine Name *</label><input type="text" name="name" class="form-control" value="{{ medicine.name|default:'' }}" required placeholder="e.g. Panadol Extra"></div>
+      <div class="form-group"><label class="form-label">Generic Name</label><input type="text" name="generic_name" class="form-control" value="{{ medicine.generic_name|default:'' }}" placeholder="e.g. Paracetamol"></div>
+      <div class="form-group"><label class="form-label">Brand</label><input type="text" name="brand" class="form-control" value="{{ medicine.brand|default:'' }}" placeholder="e.g. GSK"></div>
+      <div class="form-group"><label class="form-label">Barcode <span style="font-weight:400;color:var(--text-faint);">(laser scan or type)</span></label><input type="text" name="barcode" class="form-control" value="{{ medicine.barcode|default:'' }}" placeholder="Scan or type barcode" autofocus></div>
+      <div class="form-group"><label class="form-label">Unit *</label>
+        <select name="unit" class="form-control" required>
+          <option value="tablet" {% if medicine.unit == 'tablet' %}selected{% endif %}>Tablet</option>
+          <option value="capsule" {% if medicine.unit == 'capsule' %}selected{% endif %}>Capsule</option>
+          <option value="syrup" {% if medicine.unit == 'syrup' %}selected{% endif %}>Syrup</option>
+          <option value="injection" {% if medicine.unit == 'injection' %}selected{% endif %}>Injection</option>
+          <option value="cream" {% if medicine.unit == 'cream' %}selected{% endif %}>Cream</option>
+          <option value="drops" {% if medicine.unit == 'drops' %}selected{% endif %}>Drops</option>
+          <option value="other" {% if medicine.unit == 'other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Purchase Price (Rs.) *</label><input type="number" name="purchase_price" step="0.01" class="form-control" value="{{ medicine.purchase_price|default:'' }}" required></div>
+      <div class="form-group"><label class="form-label">Sale Price (Rs.) *</label><input type="number" name="sale_price" step="0.01" class="form-control" value="{{ medicine.sale_price|default:'' }}" required></div>
+      <div class="form-group"><label class="form-label">Stock Quantity *</label><input type="number" name="stock_quantity" class="form-control" value="{{ medicine.stock_quantity|default:0 }}" required></div>
+      <div class="form-group"><label class="form-label">Low Stock Alert At</label><input type="number" name="low_stock_alert" class="form-control" value="{{ medicine.low_stock_alert|default:10 }}"></div>
+      <div class="form-group"><label class="form-label">Batch Number</label><input type="text" name="batch_number" class="form-control" value="{{ medicine.batch_number|default:'' }}" placeholder="e.g. BT-2025-001"></div>
+      <div class="form-group"><label class="form-label">Expiry Date</label><input type="date" name="expiry_date" class="form-control" value="{{ medicine.expiry_date|date:'Y-m-d'|default:'' }}"></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-primary" onclick="return wmsValidateForm('med-form')">💾 Save Medicine</button>
+      <a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-secondary">Cancel</a>
+      {% if medicine %}<a href="{% url 'pharmacy:batch_list' medicine.pk %}" class="btn btn-secondary">📦 Manage FEFO Batches</a>{% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

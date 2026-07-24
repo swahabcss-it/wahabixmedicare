@@ -1,0 +1,109 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ action }} Staff{% endblock %}
+{% block nav_ca_staff %}active{% endblock %}
+{% block page_title %}{{ action }} Staff Member{% endblock %}
+{% block page_subtitle %}{% if action == 'Create' %}Add a new staff account to your clinic{% else %}Update account details{% endif %}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'clinic_admin:staff_list' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-header"><div class="card-title">{% if action == 'Create' %}👤 New Staff Member{% else %}✏️ Edit Staff Member{% endif %}</div></div>
+  <form method="POST" id="staff-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">First Name *</label>
+        <input type="text" name="first_name" class="form-control" value="{{ staff.user.first_name|default:'' }}" placeholder="First name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name *</label>
+        <input type="text" name="last_name" class="form-control" value="{{ staff.user.last_name|default:'' }}" placeholder="Last name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username *</label>
+        <input type="text" name="username" class="form-control" value="{{ staff.user.username|default:'' }}" placeholder="Login username" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">{% if action == 'Create' %}Password *{% else %}New Password{% endif %}</label>
+        <input type="password" name="password" class="form-control" placeholder="{% if action == 'Create' %}Set password{% else %}Leave blank to keep current{% endif %}" {% if action == 'Create' %}required{% endif %}>
+        {% if action == 'Edit' %}<span class="form-hint">Only fill this in if you want to change the password.</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="{{ staff.user.email|default:'' }}" placeholder="staff@clinic.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="tel" name="phone" class="form-control" value="{{ staff.phone|default:'' }}" placeholder="+92 300 0000000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CNIC</label>
+        <input type="text" name="cnic" class="form-control" value="{{ staff.cnic|default:'' }}" placeholder="00000-0000000-0">
+      </div>
+
+      {% if is_self %}
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <div style="padding-top:6px;"><span class="badge badge-blue">{{ staff.get_role_display }}</span></div>
+        <span class="form-hint">Your own admin role can only be changed by Super Admin.</span>
+      </div>
+      {% else %}
+      <div class="form-group">
+        <label class="form-label">Role *</label>
+        <select name="role" class="form-control" required>
+          <option value="">— Select Role —</option>
+          {% for code, label in roles %}
+          <option value="{{ code }}" {% if staff.role == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      {% if action == 'Edit' or not is_self %}
+      <div class="form-group full">
+        <label class="form-label">Additional Modules (Multi-Module Access)</label>
+        <span class="form-hint" style="display:block;margin-bottom:8px;">Let this person also work inside OTHER modules without changing their primary role/dashboard above.</span>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:500px;">
+          {% for code, label in roles %}
+          {% if code != staff.role %}
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);">
+            <input type="checkbox" name="extra_roles" value="{{ code }}" {% if code in staff_extra_roles %}checked{% endif %}>
+            {{ label }}
+          </label>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-group full">
+        <div class="toggle-row" style="max-width:400px;">
+          <div><div class="toggle-label-text">🔬 Allow Lab Result Deletion</div><div style="font-size:11px;color:var(--text-faint);">Only relevant for Lab Supervisors</div></div>
+          <label class="toggle-switch"><input type="checkbox" name="can_delete_lab_results" {% if staff.can_delete_lab_results %}checked{% endif %}><span class="toggle-track"></span></label>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <div class="toggle-row" style="max-width:400px;">
+          <div><div class="toggle-label-text">🧾 Can Access Billing / Invoices</div><div style="font-size:11px;color:var(--text-faint);">Lets them view/create/print invoices without full Accountant access. Accountants always have this regardless.</div></div>
+          <label class="toggle-switch"><input type="checkbox" name="can_access_billing" {% if staff.can_access_billing %}checked{% endif %}><span class="toggle-track"></span></label>
+        </div>
+      </div>
+
+      {% if action == 'Edit' and not is_self %}
+      <div class="form-group full">
+        <div class="toggle-row" style="max-width:400px;">
+          <div><div class="toggle-label-text">✅ Account Active</div><div style="font-size:11px;color:var(--text-faint);">Turn off to block this staff member from logging in</div></div>
+          <label class="toggle-switch"><input type="checkbox" name="is_active" {% if staff.is_active %}checked{% endif %}><span class="toggle-track"></span></label>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-primary" onclick="return wmsValidateForm('staff-form')">
+        {% if action == 'Create' %}➕ Create Staff Member{% else %}💾 Save Changes{% endif %}
+      </button>
+      <a href="{% url 'clinic_admin:staff_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+{% block title %}FEFO Batches — {{ medicine.name }}{% endblock %}
+{% block nav_medicines %}active{% endblock %}
+{% block page_title %}FEFO Batches{% endblock %}
+{% block page_subtitle %}{{ medicine.name }} — earliest-expiry batch is auto-consumed first{% endblock %}
+{% block topbar_actions %}<a href="{% url 'pharmacy:medicine_list' %}" class="btn btn-secondary btn-sm">Back</a>{% endblock %}
+{% block content %}
+<div class="split-grid" style="--split:1fr 1.3fr;">
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">+ Add Batch</div></div>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group"><label class="form-label">Batch Number *</label><input type="text" name="batch_number" class="form-control" required></div>
+      <div class="form-group"><label class="form-label">Quantity *</label><input type="number" name="quantity" class="form-control" required min="1"></div>
+      <div class="form-group"><label class="form-label">Purchase Price</label><input type="number" name="purchase_price" step="0.01" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Expiry Date *</label><input type="date" name="expiry_date" class="form-control" required></div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Add Batch</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">📦 Batches (FEFO order)</div></div>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Batch #</th><th>Quantity</th><th>Expiry</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for b in batches %}
+        <tr {% if b.is_expired %}style="opacity:.55;"{% endif %}>
+          <td class="td-mono">{{ b.batch_number }}</td>
+          <td>{{ b.quantity }}</td>
+          <td>{{ b.expiry_date }}</td>
+          <td>{% if b.is_expired %}<span class="badge badge-danger">Expired</span>{% elif forloop.first %}<span class="badge badge-success">Next (FEFO)</span>{% else %}<span class="badge">Queued</span>{% endif %}</td>
+        </tr>
+        {% empty %}<tr><td colspan="4" style="color:var(--text-faint);">No batches yet — legacy flat stock in use.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}

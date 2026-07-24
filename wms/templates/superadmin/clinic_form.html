@@ -1,0 +1,154 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ action }} Clinic{% endblock %}
+{% block nav_sa_clinics %}active{% endblock %}
+{% block page_title %}{{ action }} Clinic{% endblock %}
+{% block page_subtitle %}{% if action == 'Create' %}Register new tenant clinic{% else %}Update clinic details{% endif %}{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'superadmin:clinic_list' %}" class="btn btn-secondary btn-sm">← Back</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:800px;">
+  <div class="card-header">
+    <div>
+      <div class="card-title">{% if action == 'Create' %}🏥 New Clinic Registration{% else %}✏️ Edit Clinic{% endif %}</div>
+      <div class="card-subtitle">Fields marked * are required</div>
+    </div>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" id="clinic-form">
+    {% csrf_token %}
+
+    <!-- BASIC INFO -->
+    <div style="margin-bottom:24px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">📋 Basic Information</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Clinic Name *</label>
+          <input type="text" name="name" class="form-control" value="{{ clinic.name|default:'' }}" placeholder="e.g. Al-Shifa Medical Center" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input type="tel" name="phone" class="form-control" value="{{ clinic.phone|default:'' }}" placeholder="+92 300 0000000" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-control" value="{{ clinic.email|default:'' }}" placeholder="clinic@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subscription Plan *</label>
+          <select name="plan" class="form-control" required>
+            <option value="basic"        {% if clinic.plan == 'basic' %}selected{% endif %}>Basic</option>
+            <option value="professional" {% if clinic.plan == 'professional' or not clinic %}selected{% endif %}>Professional</option>
+            <option value="enterprise"   {% if clinic.plan == 'enterprise' %}selected{% endif %}>Enterprise</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Address *</label>
+          <textarea name="address" class="form-control" rows="2" placeholder="Full clinic address..." required>{{ clinic.address|default:'' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clinic Logo</label>
+          <input type="file" name="logo" class="form-control" accept="image/*" style="padding:8px;">
+          {% if clinic.logo %}<div style="font-size:11px;color:var(--accent);margin-top:4px;">✓ Current logo uploaded</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plan Expiry Date</label>
+          <input type="date" name="plan_expires" class="form-control" value="{{ clinic.plan_expires|default:'' }}">
+          <span class="form-hint">Leave blank for no expiry</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- MODULE TOGGLES -->
+    <div style="margin-bottom:24px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">⚙️ Module Entitlements</div>
+      <div class="toggle-grid">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">🔬 Laboratory Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Test catalog, orders, results</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_lab_enabled" {% if clinic.is_lab_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">💊 Pharmacy Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Stock, POS, sales</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_pharmacy_enabled" {% if clinic.is_pharmacy_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">👥 HR & Payroll Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Employees, salary slips</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_hr_enabled" {% if clinic.is_hr_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">🏪 Reception Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Patients, tokens, vitals</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_reception_enabled" {% if clinic.is_reception_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">👨‍⚕️ Doctor Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Queue, EHR, prescriptions</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_doctor_enabled" {% if clinic.is_doctor_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">💳 Billing Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Invoices, payments</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_billing_enabled" {% if clinic.is_billing_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label-text">🛠️ Assets Module</div>
+            <div style="font-size:11px;color:var(--text-faint);">Equipment, depreciation, service logs</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="is_assets_enabled" {% if clinic.is_assets_enabled or not clinic %}checked{% endif %}>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-primary btn-lg"
+        onclick="return wmsValidateForm('clinic-form')">
+        {% if action == 'Create' %}➕ Register Clinic{% else %}💾 Save Changes{% endif %}
+      </button>
+      <a href="{% url 'superadmin:clinic_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

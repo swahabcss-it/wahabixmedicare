@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% block title %}Patients{% endblock %}
+{% block nav_patients %}active{% endblock %}
+{% block page_title %}Patient Records{% endblock %}
+{% block page_subtitle %}All registered patients{% endblock %}
+{% block topbar_actions %}<a href="{% url 'reception:patient_create' %}" class="btn btn-primary btn-sm">Register Patient</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Patients</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">&#128269;</span><input type="text" id="pt-search" placeholder="Search patients..."></div>
+  </div>
+  <div class="table-wrap"><table id="pt-table">
+    <thead><tr><th>ID</th><th>Name</th><th>Age/Gender</th><th>Phone</th><th>Blood</th><th>Registered</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td><span class="badge badge-teal td-mono">{{ p.patient_id }}</span></td>
+        <td class="td-primary">{{ p.full_name }}</td>
+        <td>{{ p.age }}y / {{ p.get_gender_display }}</td>
+        <td>{{ p.phone }}</td>
+        <td>{% if p.blood_group %}<span class="badge badge-red">{{ p.blood_group }}</span>{% else %}&mdash;{% endif %}</td>
+        <td style="font-size:12px;">{{ p.created_at|date:"d M Y" }}</td>
+        <td><div class="td-actions">
+          <a href="{% url 'reception:patient_detail' p.pk %}" class="btn btn-secondary btn-sm">View</a>
+          <a href="{% url 'reception:token_create' %}?patient={{ p.pk }}" class="btn btn-primary btn-sm">Token</a>
+        </div></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">&#128100;</div><div class="empty-state-title">No Patients Yet</div><a href="{% url 'reception:patient_create' %}" class="btn btn-primary btn-sm">Register First Patient</a></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('pt-search','pt-table',[1,2,3]);</script>{% endblock %}

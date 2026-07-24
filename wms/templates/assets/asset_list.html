@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+{% block title %}All Assets{% endblock %}
+{% block nav_assets %}active{% endblock %}
+{% block page_title %}All Assets{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'assets:asset_create' %}" class="btn btn-primary btn-sm">➕ Register Asset</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tag</th><th>Name</th><th>Category</th><th>Location</th><th class="th-num">Purchase Cost</th><th class="th-num">Book Value</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for a in assets %}
+        <tr>
+          <td class="td-mono">{{ a.asset_tag }}</td>
+          <td class="td-primary">{{ a.name }}</td>
+          <td>{{ a.category.name }}</td>
+          <td>{{ a.location }}</td>
+          <td class="td-num">Rs.{{ a.purchase_cost|floatformat:0 }}</td>
+          <td class="td-num">Rs.{{ a.current_book_value|floatformat:0 }}</td>
+          <td>
+            <span class="badge {% if a.status == 'in_use' %}badge-green{% elif a.status == 'under_maintenance' %}badge-orange{% else %}badge-gray{% endif %}">
+              {{ a.get_status_display }}
+            </span>
+          </td>
+          <td><a href="{% url 'assets:asset_detail' a.pk %}" class="btn btn-secondary btn-sm">👁️</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">🛠️</div><div class="empty-state-title">No assets registered yet</div><a href="{% url 'assets:asset_create' %}" class="btn btn-primary btn-sm">Register First Asset</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

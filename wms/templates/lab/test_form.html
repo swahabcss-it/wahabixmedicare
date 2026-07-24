@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ action }} Test{% endblock %}
+{% block nav_catalog %}active{% endblock %}
+{% block page_title %}{{ action }} Lab Test{% endblock %}
+{% block topbar_actions %}<a href="{% url 'laboratory:test_catalog' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <div class="card-header"><div class="card-title">🔬 Test Details</div></div>
+  <form method="POST" id="test-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Test Name *</label><input type="text" name="test_name" class="form-control" value="{{ test.test_name|default:'' }}" required placeholder="e.g. Complete Blood Count"></div>
+      <div class="form-group"><label class="form-label">Test Code *</label><input type="text" name="test_code" class="form-control" value="{{ test.test_code|default:'' }}" required placeholder="e.g. CBC" style="text-transform:uppercase;"></div>
+      <div class="form-group"><label class="form-label">Rate (Rs.) *</label><input type="number" name="rate" step="0.01" class="form-control" value="{{ test.rate|default:'' }}" required></div>
+      <div class="form-group"><label class="form-label">Sample Type</label><input type="text" name="sample_type" class="form-control" value="{{ test.sample_type|default:'' }}" placeholder="e.g. Blood, Urine"></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select name="category" class="form-control">
+          <option value="clinical_chemistry" {% if test.category == 'clinical_chemistry' or not test %}selected{% endif %}>Clinical Chemistry</option>
+          <option value="haematology" {% if test.category == 'haematology' %}selected{% endif %}>Haematology</option>
+          <option value="microbiology" {% if test.category == 'microbiology' %}selected{% endif %}>Microbiology</option>
+          <option value="serology" {% if test.category == 'serology' %}selected{% endif %}>Serology / Immunology</option>
+          <option value="radiology" {% if test.category == 'radiology' %}selected{% endif %}>Radiology</option>
+          <option value="cardiology" {% if test.category == 'cardiology' %}selected{% endif %}>Cardiology</option>
+          <option value="other" {% if test.category == 'other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Result Unit</label><input type="text" name="unit" class="form-control" value="{{ test.unit|default:'' }}" placeholder="e.g. mg/dL, %"></div>
+      <div class="form-group full"><label class="form-label">Reference Range *</label><textarea name="reference_range" class="form-control" required placeholder="e.g. 4.5–11.0 ×10⁹/L">{{ test.reference_range|default:'' }}</textarea></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-primary" onclick="return wmsValidateForm('test-form')">💾 Save Test</button>
+      <a href="{% url 'laboratory:test_catalog' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

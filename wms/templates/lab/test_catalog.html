@@ -1,0 +1,47 @@
+{% extends 'base/base.html' %}
+{% block title %}Test Catalog{% endblock %}
+{% block nav_catalog %}active{% endblock %}
+{% block page_title %}Lab Test Catalog{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'laboratory:test_create' %}" class="btn btn-primary btn-sm">➕ Add Test</a>{% endblock %}
+{% block content %}
+{% with can_delete=request.user.staff_profile.can_delete_lab_results %}
+<div class="card">
+  <div class="card-header"><div class="card-title">📋 All Tests</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">🔍</span><input type="text" id="test-search" placeholder="Search tests…"></div>
+  </div>
+  {% if not can_delete %}
+  <div class="alert alert-info" style="margin:0 0 0 0;border-radius:0;border-left:none;border-right:none;">ℹ️ Test deletion is not enabled for your account. Contact your Clinic Admin to enable it.</div>
+  {% endif %}
+  <div class="table-wrap">
+    <table id="test-table">
+      <thead><tr><th>Test Name</th><th>Code</th><th>Category</th><th>Sample</th><th>Unit</th><th>Rate</th><th>Reference Range</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for t in tests %}
+        <tr>
+          <td class="td-primary">{{ t.test_name }}</td>
+          <td><span class="badge badge-teal td-mono">{{ t.test_code }}</span></td>
+          <td><span class="badge badge-blue" style="font-size:11px;">{{ t.get_category_display }}</span></td>
+          <td style="font-size:12px;">{{ t.sample_type|default:"—" }}</td>
+          <td style="font-size:12px;">{{ t.unit|default:"—" }}</td>
+          <td style="font-weight:700;">Rs.{{ t.rate|floatformat:0 }}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ t.reference_range|truncatechars:40 }}</td>
+          <td>
+            <div class="td-actions">
+              <a href="{% url 'laboratory:test_edit' t.pk %}" class="btn btn-secondary btn-sm">✏️</a>
+              {% if can_delete %}
+              <a href="{% url 'laboratory:test_delete' t.pk %}" class="btn btn-danger btn-sm" data-confirm="Soft-delete '{{ t.test_name }}'? It won't appear in orders anymore." data-danger="true">🗑️</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">🔬</div><div class="empty-state-title">No tests in catalog</div><a href="{% url 'laboratory:test_create' %}" class="btn btn-primary btn-sm">Add First Test</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('test-search','test-table',[0,1,2]);</script>{% endblock %}

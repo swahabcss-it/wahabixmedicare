@@ -1,0 +1,52 @@
+{% extends 'base/base.html' %}
+{% block title %}HR & Payroll{% endblock %}
+{% block nav_hr %}active{% endblock %}
+{% block page_title %}HR & Payroll Dashboard{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }} · {{ current_month }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'hr_payroll:payroll_generate' %}" class="btn btn-primary btn-sm">💰 Generate Payroll</a>
+  <a href="{% url 'hr_payroll:employee_create' %}" class="btn btn-secondary btn-sm">➕ Add Employee</a>
+{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon blue">👥</div><div><div class="stat-num" data-target="{{ total_employees }}">0</div><div class="stat-label">Total Employees</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-num" data-target="{{ active_employees }}">0</div><div class="stat-label">Active</div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px;">
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">🏢 By Department</div></div>
+    {% if dept_counts %}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for dept, count in dept_counts %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:13.5px;">{{ dept }}</span>
+        <span class="badge badge-blue">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding:20px;text-align:center;color:var(--text-faint);">No employees yet</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">💰 Recent Payroll Slips</div><a href="{% url 'hr_payroll:payroll_list' %}" class="btn btn-secondary btn-sm">All Slips</a></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Employee</th><th>Month/Year</th><th>Net Salary</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for s in recent_slips %}
+          <tr>
+            <td class="td-primary">{{ s.employee.user.get_full_name }}</td>
+            <td>{{ s.month }}/{{ s.year }}</td>
+            <td style="font-weight:700;">Rs.{{ s.net_salary|floatformat:0 }}</td>
+            <td><span class="badge {% if s.is_paid %}badge-green{% else %}badge-orange{% endif %}">{% if s.is_paid %}Paid{% else %}Pending{% endif %}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-faint);">No payroll generated yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

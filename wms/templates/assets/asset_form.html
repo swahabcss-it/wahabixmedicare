@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+{% block title %}Register Asset{% endblock %}
+{% block nav_assets %}active{% endblock %}
+{% block page_title %}Register New Asset{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }}{% endblock %}
+{% block content %}
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category" required>
+          {% for c in categories %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label>Asset Name</label><input type="text" name="name" required></div>
+      <div class="form-group"><label>Asset Tag / Barcode</label><input type="text" name="asset_tag" required></div>
+      <div class="form-group"><label>Serial Number</label><input type="text" name="serial_number"></div>
+      <div class="form-group"><label>Location</label><input type="text" name="location" placeholder="e.g. Lab Room 2"></div>
+      <div class="form-group"><label>Purchase Date</label><input type="date" name="purchase_date" required></div>
+      <div class="form-group"><label>Purchase Cost (Rs.)</label><input type="number" step="0.01" name="purchase_cost" required></div>
+      <div class="form-group"><label>Salvage Value (Rs.)</label><input type="number" step="0.01" name="salvage_value" value="0"></div>
+      <div class="form-group"><label>Useful Life (Years)</label><input type="number" name="useful_life_years" placeholder="Leave blank to use category default"></div>
+      <div class="form-group"><label>Vendor</label><input type="text" name="vendor"></div>
+      <div class="form-group"><label>Warranty Expires</label><input type="date" name="warranty_expires"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea name="notes" rows="3"></textarea></div>
+    <button type="submit" class="btn btn-primary">Save Asset</button>
+  </form>
+</div>
+{% endblock %}

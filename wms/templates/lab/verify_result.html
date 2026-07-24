@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report Verification — Wahabix Medicare</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background:#0f172a; color:#e2e8f0; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+  .card { background:#1e293b; border-radius:16px; padding:36px; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.4); }
+  .icon { font-size:52px; margin-bottom:10px; }
+  h1 { font-size:19px; margin:0 0 6px; }
+  .valid { color:#10b981; }
+  .invalid { color:#ef4444; }
+  .meta { font-size:13.5px; color:#94a3b8; margin-top:16px; text-align:left; background:#0f172a; border-radius:10px; padding:14px; }
+  .meta div { display:flex; justify-content:space-between; padding:4px 0; }
+  footer { margin-top:20px; font-size:11px; color:#64748b; }
+</style>
+</head>
+<body>
+  <div class="card">
+    {% if valid %}
+      <div class="icon">✅</div>
+      <h1 class="valid">Report Verified &amp; Authentic</h1>
+      <p style="color:#94a3b8;font-size:13px;">This diagnostic report was issued and QR-secured by the clinic.</p>
+      <div class="meta">
+        <div><span>Voucher</span><strong>{{ order.voucher_code }}</strong></div>
+        <div><span>Patient</span><strong>{{ patient_name }}</strong></div>
+        <div><span>Verified On</span><strong>{{ verified_at|date:"d M Y, H:i" }}</strong></div>
+      </div>
+    {% else %}
+      <div class="icon">⚠️</div>
+      <h1 class="invalid">Could Not Verify This Report</h1>
+      <p style="color:#94a3b8;font-size:13px;">This QR code doesn't match any verified report on file. If you received this from your clinic, please contact them directly to confirm.</p>
+    {% endif %}
+    <footer>Wahabix Medicare Solution — Secure Report Verification</footer>
+  </div>
+</body>
+</html>

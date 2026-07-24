@@ -1,0 +1,51 @@
+{% extends 'base/base.html' %}
+{% block title %}RX-{{ rx.pk|stringformat:"04d" }}{% endblock %}
+{% block nav_doctor %}active{% endblock %}
+{% block page_title %}Prescription RX-{{ rx.pk|stringformat:"04d" }}{% endblock %}
+{% block page_subtitle %}{{ rx.patient.full_name }} · {{ rx.visit_date|date:"d F Y" }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:prescription_list' %}" class="btn btn-secondary btn-sm">← Back</a><a href="{% url 'doctor:prescription_edit' rx.pk %}" class="btn btn-secondary btn-sm">✏️ Edit</a><a href="{% url 'doctor:prescription_print' rx.pk %}" class="btn btn-primary btn-sm" target="_blank">🖨️ Print (Letterhead)</a><a href="{% url 'doctor:prescription_pdf' rx.pk %}" class="btn btn-secondary btn-sm" target="_blank">👁️ View PDF</a> <a href="{% url 'doctor:prescription_pdf' rx.pk %}?download=1" class="btn btn-success btn-sm">⬇️ Download PDF</a>{% endblock %}
+{% block content %}
+<div class="split-grid" style="--split:1fr 1.5fr;">
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">👤 Patient</div></div>
+    <table class="info-table" style="width:100%">
+      <tr><td>Name</td><td class="td-primary">{{ rx.patient.full_name }}</td></tr>
+      <tr><td>ID</td><td class="td-mono">{{ rx.patient.patient_id }}</td></tr>
+      <tr><td>Age/Sex</td><td>{{ rx.patient.age }}y / {{ rx.patient.get_gender_display }}</td></tr>
+      <tr><td>Doctor</td><td>Dr. {{ rx.doctor.user.get_full_name }}</td></tr>
+      <tr><td>Date</td><td>{{ rx.visit_date|date:"d M Y, H:i" }}</td></tr>
+      {% if rx.follow_up_date %}<tr><td>Follow-up</td><td style="color:var(--accent)">{{ rx.follow_up_date|date:"d M Y" }}</td></tr>{% endif %}
+    </table>
+    <div style="padding:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Symptoms</div>
+      <div style="font-size:13.5px;">{{ rx.symptoms }}</div>
+    </div>
+    <div style="padding:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Diagnosis</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text-h);">{{ rx.diagnosis }}</div>
+    </div>
+    {% if rx.notes %}<div style="padding:14px;border-top:1px solid var(--border)"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Notes</div><div style="font-size:13px;">{{ rx.notes }}</div></div>{% endif %}
+  </div>
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">💊 Prescribed Medicines</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th></tr></thead>
+        <tbody>
+          {% for m in medicines %}
+          <tr>
+            <td class="td-primary">{{ m.medicine_name }}</td>
+            <td>{{ m.dosage }}</td>
+            <td><span class="badge badge-blue">{{ m.frequency }}</span></td>
+            <td>{{ m.duration }}</td>
+            <td style="font-size:12px;color:var(--text-muted)">{{ m.instructions|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-faint);">No medicines prescribed</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

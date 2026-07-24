@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ PLATFORM_THEME|default:'dark' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Portal — Wahabix Medicare Solution</title>
+<link rel="stylesheet" href="/static/css/wms-theme.css?v={{ APP_VERSION }}">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px 0;}
+.login-bg{
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 50%, rgba(var(--accent-rgb),.07) 0%, transparent 60%),
+             radial-gradient(ellipse at 80% 20%, rgba(14,165,233,.06) 0%, transparent 60%);
+  pointer-events:none;
+}
+.login-wrap{width:100%;max-width:420px;padding:24px;position:relative;z-index:1;}
+.login-header{text-align:center;margin-bottom:28px;}
+.login-logo{
+  width:64px;height:64px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:18px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:800;color:#04281f;margin:0 auto 16px;
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.4);
+}
+.login-header h1{font-size:22px;color:var(--text-h);margin:0 0 4px;}
+.login-header p{font-size:13px;color:var(--text-faint);margin:0;}
+.login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;}
+.login-card h2{font-size:17px;color:var(--text-h);margin:0 0 4px;}
+.login-card .sub{font-size:13px;color:var(--text-faint);margin:0 0 20px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.input-icon{position:relative;}
+.input-icon span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;}
+.input-icon input{width:100%;padding:11px 12px 11px 36px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text-h);font-size:14px;}
+.input-icon input:focus{outline:none;border-color:var(--accent);}
+.btn-login{
+  width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04281f;cursor:pointer;margin-top:6px;
+}
+.hint-box{margin-top:18px;padding:12px 14px;background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.2);border-radius:10px;font-size:12px;color:var(--text-muted);}
+footer{text-align:center;margin-top:24px;font-size:11px;color:var(--text-faint);}
+</style>
+</head>
+<body>
+<div class="login-bg"></div>
+<div class="login-wrap">
+  <div class="login-header">
+    <div class="login-logo">🧑‍⚕️</div>
+    <h1>Patient Portal</h1>
+    <p>View your prescriptions, lab reports &amp; invoices</p>
+  </div>
+
+  <div class="login-card">
+    <h2>Welcome 👋</h2>
+    <div class="sub">Sign in with the Patient ID &amp; password from your registration slip</div>
+
+    {% if messages %}
+      {% for msg in messages %}
+        <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Patient ID</label>
+        <div class="input-icon">
+          <span>🆔</span>
+          <input type="text" name="patient_id" placeholder="e.g. P-0004" required autofocus>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-icon">
+          <span>🔒</span>
+          <input type="password" name="password" placeholder="6-character code" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-login">🔓 Sign In</button>
+    </form>
+
+    <div class="hint-box">
+      💡 Don't have a password yet, or lost your slip? Ask Reception at your clinic — they can print you a new one instantly.
+    </div>
+  </div>
+
+  <footer>© 2026 Wahabix Medicare Solution — Patient Portal</footer>
+</div>
+</body>
+</html>

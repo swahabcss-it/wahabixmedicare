@@ -1,0 +1,26 @@
+{% extends 'base/base.html' %}
+{% block title %}Treatment Templates{% endblock %}
+{% block nav_doctor %}active{% endblock %}
+{% block page_title %}Treatment Templates{% endblock %}
+{% block page_subtitle %}1-Click Prescription Sets — Zero-Typing Fail-safe{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:template_create' %}" class="btn btn-primary btn-sm">+ New Template</a> <a href="{% url 'doctor:dashboard' %}" class="btn btn-secondary btn-sm">Back</a>{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+  {% for t in templates %}
+  <div class="card" style="margin:0;">
+    <div class="card-header"><div class="card-title">{{ t.icon }} {{ t.name }}</div></div>
+    <table class="info-table" style="width:100%;font-size:12.5px;">
+      <tr><td>ICD-11</td><td class="td-mono">{{ t.icd11_code|default:"—" }}</td></tr>
+      <tr><td>Diagnosis</td><td>{{ t.diagnosis_text|default:"—"|truncatechars:40 }}</td></tr>
+      <tr><td>Medicines</td><td>{{ t.medicines_json|length }} item(s)</td></tr>
+      <tr><td>Used</td><td>{{ t.usage_count }}x</td></tr>
+    </table>
+    <div style="margin-top:10px;">
+      <a href="{% url 'doctor:template_delete' t.pk %}" class="btn btn-secondary btn-sm" onclick="return confirm('Remove this template?')">🗑 Remove</a>
+    </div>
+  </div>
+  {% empty %}
+  <p style="color:var(--text-faint);">No templates yet. Create your first 1-click treatment set.</p>
+  {% endfor %}
+</div>
+{% endblock %}

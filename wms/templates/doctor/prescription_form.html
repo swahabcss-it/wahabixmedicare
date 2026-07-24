@@ -1,0 +1,154 @@
+{% extends 'base/base.html' %}
+{% block title %}Doctor Workspace{% endblock %}
+{% block nav_doctor %}active{% endblock %}
+{% block page_title %}Doctor Workspace{% endblock %}
+{% block page_subtitle %}Token #{{ token.token_number }} — {{ token.patient.full_name }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:queue' %}" class="btn btn-secondary btn-sm">← Back to Queue</a> <a href="{% url 'doctor:template_list' %}" class="btn btn-secondary btn-sm">⭐ Manage Templates</a>{% endblock %}
+{% block content %}
+<div class="split-grid" style="--split:1fr 1.8fr;">
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">👤 Patient Info</div></div>
+    <table class="info-table" style="width:100%">
+      <tr><td>Name</td><td class="td-primary">{{ token.patient.full_name }}</td></tr>
+      <tr><td>ID</td><td class="td-mono">{{ token.patient.patient_id }}</td></tr>
+      <tr><td>Age/Sex</td><td>{{ token.patient.age }}y / {{ token.patient.get_gender_display }}</td></tr>
+      <tr><td>Blood Group</td><td>{{ token.patient.blood_group|default:"—" }}</td></tr>
+      <tr><td>Allergies</td><td style="color:var(--danger)">{{ token.patient.allergies|default:"None" }}</td></tr>
+      {% if token.blood_pressure %}<tr><td>BP</td><td>{{ token.blood_pressure }}</td></tr>{% endif %}
+      {% if token.temperature %}<tr><td>Temp</td><td>{{ token.temperature }}°F</td></tr>{% endif %}
+      {% if token.weight %}<tr><td>Weight</td><td>{{ token.weight }} kg</td></tr>{% endif %}
+      {% if token.pulse %}<tr><td>Pulse</td><td>{{ token.pulse }} bpm</td></tr>{% endif %}
+    </table>
+
+    <div style="margin-top:16px;font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;">⭐ 1-Click Treatment Sets</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+      {% for t in templates %}
+      <button type="button" class="btn btn-secondary btn-sm" onclick="applyTemplate({{ t.pk }})">{{ t.icon }} {{ t.name }}</button>
+      {% empty %}
+      <span style="font-size:12.5px;color:var(--text-faint);">No templates yet — <a href="{% url 'doctor:template_create' %}">create one</a> to speed up prescribing.</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📝 Prescription</div>
+      <span style="font-size:11px;color:var(--text-faint);">Press <kbd>Alt</kbd>+<kbd>P</kbd> to Finalize &amp; Dispatch</span>
+    </div>
+    <form method="POST" id="rx-form">
+      {% csrf_token %}
+      <input type="hidden" name="template_id" id="template_id">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Chief Complaints *</label>
+          <textarea name="symptoms" id="symptoms" class="form-control" rows="2" required placeholder="Patient's complaints…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ICD-11 Code</label>
+          <input type="text" name="icd11_code" id="icd11_code" class="form-control" placeholder="e.g. 1A07">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Diagnosis *</label>
+        <textarea name="diagnosis" id="diagnosis" class="form-control" rows="2" required placeholder="Clinical diagnosis…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Medicines <span style="font-weight:400;color:var(--text-faint);">— click ☀️🌤️🌙 for dosage timing, no typing needed</span></label>
+        <div id="med-rows">
+          {% for i in "12345" %}
+          <div class="med-row" style="display:grid;grid-template-columns:2fr 1fr 1.4fr 1fr;gap:6px;margin-bottom:6px;align-items:center;">
+            <input type="text" name="med_name" class="form-control med-name" placeholder="Medicine name">
+            <input type="text" name="med_dosage" class="form-control med-dosage" placeholder="Dosage (e.g. 500mg)">
+            <div class="dosage-icons" style="display:flex;gap:4px;">
+              <button type="button" class="btn btn-secondary btn-sm dose-btn" data-dose="1">☀️</button>
+              <button type="button" class="btn btn-secondary btn-sm dose-btn" data-dose="1">🌤️</button>
+              <button type="button" class="btn btn-secondary btn-sm dose-btn" data-dose="1">🌙</button>
+              <input type="hidden" name="med_freq" class="med-freq" value="0-0-0">
+            </div>
+            <input type="text" name="med_duration" class="form-control med-duration" placeholder="Duration (7 days)">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔬 Lab Tests <span style="font-weight:400;color:var(--text-faint);">— auto-routes a lab order + token on Finalize</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-height:110px;overflow-y:auto;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+          {% for lt in lab_tests %}
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;">
+            <input type="checkbox" name="lab_test_ids" value="{{ lt.pk }}" class="lab-test-cb" {% if lt.pk|stringformat:"s" in lab_test_ids_checked %}checked{% endif %}> {{ lt.test_name }}
+          </label>
+          {% empty %}<span style="font-size:12px;color:var(--text-faint);">No tests in catalog.</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Notes / Advice</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="Additional advice…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Follow-up Date</label>
+          <input type="date" name="follow_up_date" class="form-control">
+        </div>
+      </div>
+      <button type="submit" id="finalize-btn" class="btn btn-success btn-lg" style="width:100%;margin-top:8px;" onclick="return wmsValidateForm('rx-form')">
+        🔒 Finalize & Dispatch Order (Alt+P)
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+// Visual Dosage Selectors — click ☀️/🌤️/🌙 to toggle 1/0, builds "1-0-1" string
+document.querySelectorAll('.med-row').forEach(row => {
+  const btns = row.querySelectorAll('.dose-btn');
+  const hidden = row.querySelector('.med-freq');
+  function rebuild(){
+    const vals = Array.from(btns).map(b => b.classList.contains('active') ? '1' : '0');
+    hidden.value = vals.join('-');
+  }
+  btns.forEach(b => {
+    b.addEventListener('click', () => { b.classList.toggle('active'); b.style.opacity = b.classList.contains('active') ? '1' : '.4'; rebuild(); });
+    b.style.opacity = '.4';
+  });
+});
+
+function applyTemplate(id){
+  fetch(`/doctor/templates/${id}/apply/`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('template_id').value = id;
+      if (data.chief_complaint_text) document.getElementById('symptoms').value = data.chief_complaint_text;
+      if (data.diagnosis_text) document.getElementById('diagnosis').value = data.diagnosis_text;
+      if (data.icd11_code) document.getElementById('icd11_code').value = data.icd11_code;
+      const rows = document.querySelectorAll('.med-row');
+      data.medicines.forEach((m, i) => {
+        if (!rows[i]) return;
+        rows[i].querySelector('.med-name').value = m.name || '';
+        rows[i].querySelector('.med-dosage').value = m.dosage || '';
+        rows[i].querySelector('.med-duration').value = m.duration || '';
+        const hidden = rows[i].querySelector('.med-freq');
+        hidden.value = m.frequency || '0-0-0';
+        const parts = hidden.value.split('-');
+        rows[i].querySelectorAll('.dose-btn').forEach((b, bi) => {
+          const on = parts[bi] === '1';
+          b.classList.toggle('active', on);
+          b.style.opacity = on ? '1' : '.4';
+        });
+      });
+      document.querySelectorAll('.lab-test-cb').forEach(cb => { cb.checked = data.lab_test_ids.includes(parseInt(cb.value)); });
+      if (window.WMSToast) WMSToast.success('Template applied — review & Finalize');
+    });
+}
+
+// Alt+P → Finalize & Dispatch
+document.addEventListener('keydown', function(e){
+  if (e.altKey && (e.key === 'p' || e.key === 'P')) {
+    e.preventDefault();
+    document.getElementById('finalize-btn').click();
+  }
+});
+</script>
+{% endblock %}

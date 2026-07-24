@@ -1,0 +1,26 @@
+{% extends 'base/base.html' %}
+{% block title %}Platform Settings{% endblock %}
+{% block page_title %}Platform Settings{% endblock %}
+{% block page_subtitle %}Applies to every clinic and the login page — Super Admin only{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-header"><div class="card-title">🎨 Platform Theme</div></div>
+  <p style="color:var(--text-faint);font-size:13px;margin-bottom:16px;">
+    This is the only place the theme can be changed. It is applied
+    identically for every clinic, every staff role, and the public login
+    page — individual users can no longer pick their own theme.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+      {% for value, label in themes %}
+      <label style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:12px 8px;border-radius:10px;border:2px solid {% if settings_obj.theme == value %}var(--accent){% else %}var(--border){% endif %};">
+        <input type="radio" name="theme" value="{{ value }}" {% if settings_obj.theme == value %}checked{% endif %} style="margin:0;">
+        <span style="font-size:12px;font-weight:600;">{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:20px;">Apply Theme Platform-Wide</button>
+  </form>
+</div>
+{% endblock %}

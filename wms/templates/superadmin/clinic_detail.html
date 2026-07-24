@@ -1,0 +1,108 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ clinic.name }}{% endblock %}
+{% block nav_sa_clinics %}active{% endblock %}
+{% block page_title %}{{ clinic.name }}{% endblock %}
+{% block page_subtitle %}Clinic Detail · ID {{ clinic.pk }}{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'superadmin:clinic_enter' clinic.pk %}" class="btn btn-primary btn-sm">⚡ Enter Clinic</a>
+  <a href="{% url 'superadmin:clinic_edit' clinic.pk %}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+  <a href="{% url 'superadmin:clinic_toggle_suspend' clinic.pk %}"
+    data-confirm="{% if clinic.is_suspended %}Activate this clinic?{% else %}Suspend this clinic? All staff will lose access.{% endif %}"
+    class="btn {% if clinic.is_suspended %}btn-success{% else %}btn-danger{% endif %} btn-sm">
+    {% if clinic.is_suspended %}▶️ Activate{% else %}⛔ Suspend{% endif %}
+  </a>
+  <a href="{% url 'superadmin:clinic_list' %}" class="btn btn-secondary btn-sm">← Back</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- CLINIC INFO -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🏥 Clinic Information</div>
+      {% if clinic.is_suspended %}<span class="badge badge-red">🚫 Suspended</span>
+      {% elif clinic.is_active %}<span class="badge badge-green">✅ Active</span>
+      {% else %}<span class="badge badge-orange">⚠️ Inactive</span>{% endif %}
+    </div>
+    <table class="info-table" style="width:100%;">
+      <tr><td>Name</td><td class="td-primary">{{ clinic.name }}</td></tr>
+      <tr><td>Slug</td><td><span class="badge badge-blue td-mono">{{ clinic.slug }}</span></td></tr>
+      <tr><td>Phone</td><td>{{ clinic.phone }}</td></tr>
+      <tr><td>Email</td><td>{{ clinic.email|default:"—" }}</td></tr>
+      <tr><td>Address</td><td>{{ clinic.address }}</td></tr>
+      <tr><td>Plan</td><td>
+        <span class="badge {% if clinic.plan == 'enterprise' %}badge-teal{% elif clinic.plan == 'professional' %}badge-blue{% else %}badge-gray{% endif %}">
+          {{ clinic.get_plan_display }}
+        </span>
+      </td></tr>
+      <tr><td>Plan Expires</td><td>{{ clinic.plan_expires|default:"No Expiry" }}</td></tr>
+      <tr><td>Registered</td><td>{{ clinic.created_at|date:"d M Y, H:i" }}</td></tr>
+      {% if clinic.is_suspended and clinic.suspension_reason %}
+      <tr><td>Reason</td><td style="color:var(--danger);">{{ clinic.suspension_reason }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+
+  <!-- MODULE FLAGS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⚙️ Module Entitlements</div>
+      <a href="{% url 'superadmin:clinic_edit' clinic.pk %}" class="btn btn-secondary btn-sm">Manage</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for key, icon, label, enabled in modules %}
+      <div style="display:flex;align-items:center;justify-content:space-between;
+        padding:10px 14px;background:var(--bg-hover);border:1px solid var(--border);
+        border-radius:var(--radius-sm);">
+        <span style="font-size:13.5px;">{{ icon }} {{ label }}</span>
+        {% if enabled %}
+          <span class="badge badge-green">✅ Enabled</span>
+        {% else %}
+          <span class="badge badge-red">❌ Disabled</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- STAFF LIST -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header">
+    <div>
+      <div class="card-title">👥 Clinic Staff</div>
+      <div class="card-subtitle">{{ staff.count }} staff member{{ staff.count|pluralize }}</div>
+    </div>
+    <a href="{% url 'superadmin:staff_create' %}?clinic={{ clinic.pk }}" class="btn btn-primary btn-sm">➕ Add Staff</a>
+  </div>
+  {% if staff %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Username</th><th>Role</th><th>Phone</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for member in staff %}
+        <tr>
+          <td class="td-primary">{{ member.user.get_full_name|default:member.user.username }}</td>
+          <td class="td-mono">{{ member.user.username }}</td>
+          <td><span class="badge badge-blue">{{ member.get_role_display }}</span></td>
+          <td>{{ member.phone|default:"—" }}</td>
+          <td>{% if member.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+          <td><a href="{% url 'superadmin:staff_edit' member.pk %}" class="btn btn-secondary btn-sm">✏️</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:32px;">
+    <div class="empty-state-icon">👥</div>
+    <div class="empty-state-title">No Staff Yet</div>
+    <a href="{% url 'superadmin:staff_create' %}?clinic={{ clinic.pk }}" class="btn btn-primary btn-sm">➕ Add First Staff Member</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

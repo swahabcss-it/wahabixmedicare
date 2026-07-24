@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Token #{{ token.token_number }} — {{ clinic.name }}</title>
+<style>
+  @page { size: 80mm auto; margin: 4mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', monospace;
+    width: 76mm;
+    margin: 0 auto;
+    padding: 8px;
+    color: #000;
+    background: #fff;
+    font-size: 12px;
+  }
+  .center { text-align: center; }
+  .clinic-name { font-size: 15px; font-weight: 800; letter-spacing: .5px; }
+  .clinic-sub { font-size: 10px; margin-bottom: 6px; }
+  hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  .token-box {
+    text-align: center; border: 2px solid #000; border-radius: 4px;
+    padding: 8px 4px; margin: 8px 0;
+  }
+  .token-box .label { font-size: 10px; letter-spacing: 1px; }
+  .token-box .number { font-size: 34px; font-weight: 900; line-height: 1.1; }
+  .row { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
+  .row .k { color: #333; }
+  .row .v { font-weight: 700; text-align: right; }
+  table.items { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.items td { padding: 2px 0; }
+  .total-row { font-weight: 900; font-size: 13px; border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; }
+  .footer { text-align: center; font-size: 10px; margin-top: 10px; }
+  .no-print { text-align: center; margin-top: 16px; }
+  .no-print button {
+    padding: 8px 20px; font-size: 13px; font-weight: 700; border-radius: 6px;
+    border: 1px solid #000; background: #000; color: #fff; cursor: pointer;
+  }
+  @media print {
+    .no-print { display: none; }
+    body { width: auto; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="center">
+    {% if clinic.logo %}<img src="{{ clinic.logo.url }}" style="max-width:50px;max-height:50px;margin-bottom:4px;">{% endif %}
+    <div class="clinic-name">{{ clinic.name }}</div>
+    {% if clinic.address %}<div class="clinic-sub">{{ clinic.address }}</div>{% endif %}
+    {% if clinic.phone %}<div class="clinic-sub">☎ {{ clinic.phone }}</div>{% endif %}
+  </div>
+
+  <hr>
+
+  <div class="token-box">
+    <div class="label">TOKEN NUMBER</div>
+    <div class="number">{{ token.token_number }}</div>
+  </div>
+
+  <div class="row"><span class="k">Patient</span><span class="v">{{ token.patient.full_name }}</span></div>
+  <div class="row"><span class="k">Patient ID</span><span class="v">{{ token.patient.patient_id }}</span></div>
+  <div class="row"><span class="k">Age / Gender</span><span class="v">{{ token.patient.age }} / {{ token.patient.get_gender_display }}</span></div>
+  <div class="row"><span class="k">Date</span><span class="v">{{ token.visit_date|date:"d M Y" }}</span></div>
+  <div class="row"><span class="k">Time</span><span class="v">{{ token.created_at|date:"h:i A" }}</span></div>
+
+  <hr>
+
+  {% if token.invoice %}
+    <div class="center" style="font-weight:800;margin-bottom:4px;">RECEIPT / INVOICE</div>
+    <div class="row"><span class="k">Invoice #</span><span class="v">{{ token.invoice.invoice_number }}</span></div>
+    <table class="items">
+      {% for item in token.invoice.items.all %}
+      <tr>
+        <td>{{ item.description }}</td>
+        <td style="text-align:right;">Rs.{{ item.subtotal|floatformat:0 }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="row total-row"><span class="k">TOTAL PAID</span><span class="v">Rs.{{ token.invoice.amount_paid|floatformat:0 }}</span></div>
+    <div class="row"><span class="k">Status</span><span class="v">{{ token.invoice.get_status_display }}</span></div>
+  {% else %}
+    <div class="center" style="font-style:italic;">No fee collected at counter.</div>
+  {% endif %}
+
+  <hr>
+
+  <div class="portal-box" style="text-align:center;border:1px dashed #000;border-radius:6px;padding:8px;margin:8px 0;">
+    <div style="font-weight:800;font-size:11px;letter-spacing:.5px;">🧑‍⚕️ PATIENT PORTAL LOGIN</div>
+    <div style="font-size:10px;margin-top:2px;">View your prescriptions &amp; lab reports online</div>
+    <div style="margin-top:6px;font-size:11px;">
+      <b>Patient ID:</b> {{ token.patient.patient_id }}<br>
+      <b>Password:</b> {{ portal_password }}
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="footer">
+    Thank you for visiting {{ clinic.name }}.<br>
+    Please bring this token/receipt for your visit.<br>
+    Powered by Wahabix Medicare Solution
+  </div>
+
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Print</button>
+  </div>
+
+<script>
+  // When this page is opened standalone (e.g. right after issuing a new
+  // token), auto-print then jump back to the token list automatically —
+  // no manual "back" needed. When it's loaded silently inside a hidden
+  // iframe (the 🖨️ Print button on the token list), the PARENT page
+  // triggers the print instead (see wmsSilentPrint in wms-app.js), so we
+  // skip auto-printing here to avoid a duplicate print dialog.
+  var isStandalonePage = (window.self === window.top);
+  if (isStandalonePage) {
+    window.addEventListener('load', function () {
+      setTimeout(function () { window.print(); }, 250);
+    });
+    window.onafterprint = function () {
+      window.location.href = "{% url 'reception:token_list' %}";
+    };
+  }
+</script>
+</body>
+</html>

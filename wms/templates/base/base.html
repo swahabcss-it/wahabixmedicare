@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ PLATFORM_THEME|default:'dark' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="WAHABIX (Shah Abdul Wahab)">
+<title>{% block title %}Dashboard{% endblock %} — {{ APP_NAME }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/wms-theme.css?v={{ APP_VERSION }}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="wms-layout">
+
+  <!-- ════════════ SIDEBAR ════════════ -->
+  <aside class="wms-sidebar" id="wms-sidebar">
+
+    <a href="{% url 'core:home' %}" class="sidebar-brand">
+      {% if current_clinic %}
+        {% if current_clinic.logo %}
+          <img src="{{ current_clinic.logo.url }}" alt="{{ current_clinic.name }}" class="brand-logo" style="object-fit:cover;">
+        {% else %}
+          <div class="brand-logo">{{ current_clinic.name|slice:":2"|upper }}</div>
+        {% endif %}
+        <div class="brand-text">
+          <div class="brand-name">{{ current_clinic.name|truncatechars:22 }}</div>
+          <div class="brand-tag">Clinic Management System</div>
+        </div>
+      {% else %}
+        <div class="brand-logo">{{ APP_DEVELOPER|slice:":2"|upper }}</div>
+        <div class="brand-text">
+          <div class="brand-name">{{ APP_NAME }}</div>
+          <div class="brand-tag">SaaS v2.0 · Super Admin</div>
+        </div>
+      {% endif %}
+    </a>
+
+    <div class="sidebar-scroll">
+
+      {% if request.user.is_superuser %}
+      <!-- SUPERADMIN NAV -->
+      <div class="nav-section">Super Admin</div>
+      <a href="{% url 'superadmin:dashboard' %}" class="nav-link {% block nav_sa_dash %}{% endblock %}">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="{% url 'superadmin:clinic_list' %}" class="nav-link {% block nav_sa_clinics %}{% endblock %}">
+        <span class="nav-icon">🏥</span> All Clinics
+      </a>
+      <a href="{% url 'superadmin:clinic_create' %}" class="nav-link {% block nav_sa_create %}{% endblock %}">
+        <span class="nav-icon">➕</span> Add Clinic
+      </a>
+      <a href="{% url 'superadmin:staff_list' %}" class="nav-link {% block nav_sa_staff %}{% endblock %}">
+        <span class="nav-icon">👥</span> Staff Management
+      </a>
+      <a href="{% url 'superadmin:audit_logs' %}" class="nav-link {% block nav_sa_audit %}{% endblock %}">
+        <span class="nav-icon">📋</span> Audit Logs
+      </a>
+      <a href="{% url 'superadmin:platform_settings' %}" class="nav-link {% block nav_sa_settings %}{% endblock %}">
+        <span class="nav-icon">🎨</span> Platform Settings
+      </a>
+      <div class="nav-section">System</div>
+      <a href="/django-admin/" class="nav-link">
+        <span class="nav-icon">⚙️</span> Django Admin
+      </a>
+
+      {% if is_sa_viewing %}
+      <!-- SA VIEWING A CLINIC — show all clinic modules too -->
+      <div class="nav-section" style="color:var(--warning);">📍 {{ current_clinic.name }}</div>
+      <a href="{% url 'core:home' %}" class="nav-link" style="color:var(--warning);">
+        <span class="nav-icon">🏠</span> Clinic Home
+      </a>
+      <a href="{% url 'superadmin:clinic_exit' %}" class="nav-link" style="color:var(--danger);" data-confirm="Exit clinic view?">
+        <span class="nav-icon">🚪</span> Exit Clinic View
+      </a>
+      {% endif %}
+
+      {% else %}
+      <!-- CLINIC STAFF NAV -->
+      <div class="nav-section">Main</div>
+      <a href="{% url 'core:home' %}" class="nav-link {% block nav_home %}{% endblock %}">
+        <span class="nav-icon">🏠</span> Home
+      </a>
+
+      {% if is_clinic_admin %}
+      <div class="nav-section">Management</div>
+      <a href="{% url 'clinic_admin:dashboard' %}" class="nav-link {% block nav_ca_dash %}{% endblock %}">
+        <span class="nav-icon">🏢</span> Admin Dashboard
+      </a>
+      <a href="{% url 'clinic_admin:staff_list' %}" class="nav-link {% block nav_ca_staff %}{% endblock %}">
+        <span class="nav-icon">👥</span> Manage Staff
+      </a>
+      <a href="{% url 'clinic_admin:clinic_profile' %}" class="nav-link {% block nav_ca_profile %}{% endblock %}">
+        <span class="nav-icon">⚙️</span> Clinic Settings
+      </a>
+      {% endif %}
+
+      {% if nav_show_reception or nav_show_doctor or nav_show_lab or nav_show_pharmacy or nav_show_hr or nav_show_billing %}
+      <div class="nav-section">Modules</div>
+      {% endif %}
+
+      {% if nav_show_reception %}
+      <div class="nav-section">Reception</div>
+      <a href="{% url 'reception:dashboard' %}" class="nav-link {% block nav_reception %}{% endblock %}">
+        <span class="nav-icon">🏪</span> Reception
+      </a>
+      <a href="{% url 'reception:patient_list' %}" class="nav-link {% block nav_patients %}{% endblock %}">
+        <span class="nav-icon">👤</span> Patients
+      </a>
+      <a href="{% url 'reception:token_list' %}" class="nav-link {% block nav_tokens %}{% endblock %}">
+        <span class="nav-icon">🎫</span> Tokens
+      </a>
+      <a href="{% url 'reception:pending_lab_payments' %}" class="nav-link {% block nav_reception_labpay %}{% endblock %}">
+        <span class="nav-icon">🧪💰</span> Pending Lab Payments
+      </a>
+      {% if nav_show_invoicing_access %}
+      <a href="{% url 'billing:invoice_list' %}" class="nav-link {% block nav_reception_invoices %}{% endblock %}">
+        <span class="nav-icon">🧾</span> Invoices
+      </a>
+      <a href="{% url 'billing:invoice_create' %}" class="nav-link {% block nav_reception_invoice_new %}{% endblock %}">
+        <span class="nav-icon">➕</span> New Invoice
+      </a>
+      {% endif %}
+      {% endif %}
+
+      {% if nav_show_doctor %}
+      <div class="nav-section">Doctor</div>
+      <a href="{% url 'doctor:dashboard' %}" class="nav-link {% block nav_doctor %}{% endblock %}">
+        <span class="nav-icon">👨‍⚕️</span> Dashboard
+      </a>
+      <a href="{% url 'doctor:queue' %}" class="nav-link {% block nav_queue %}{% endblock %}">
+        <span class="nav-icon">🎫</span> Patient Queue
+      </a>
+      <a href="{% url 'doctor:prescription_list' %}" class="nav-link {% block nav_prescriptions %}{% endblock %}">
+        <span class="nav-icon">📋</span> Prescriptions
+      </a>
+      <a href="{% url 'doctor:template_list' %}" class="nav-link {% block nav_templates %}{% endblock %}">
+        <span class="nav-icon">⭐</span> Treatment Templates
+      </a>
+      {% endif %}
+
+      {% if nav_show_lab %}
+      <div class="nav-section">Laboratory</div>
+      <a href="{% url 'laboratory:dashboard' %}" class="nav-link {% block nav_lab %}{% endblock %}">
+        <span class="nav-icon">🔬</span> Lab Dashboard
+      </a>
+      <a href="{% url 'laboratory:test_catalog' %}" class="nav-link {% block nav_catalog %}{% endblock %}">
+        <span class="nav-icon">📋</span> Test Catalog
+      </a>
+      <a href="{% url 'laboratory:order_list' %}" class="nav-link {% block nav_orders %}{% endblock %}">
+        <span class="nav-icon">📝</span> Lab Orders
+      </a>
+      {% if nav_show_invoicing_access %}
+      <a href="{% url 'billing:invoice_list' %}" class="nav-link {% block nav_lab_invoices %}{% endblock %}">
+        <span class="nav-icon">🧾</span> Invoices
+      </a>
+      <a href="{% url 'billing:invoice_create' %}" class="nav-link {% block nav_lab_invoice_new %}{% endblock %}">
+        <span class="nav-icon">➕</span> New Invoice
+      </a>
+      {% endif %}
+      {% endif %}
+
+      {% if nav_show_pharmacy %}
+      <div class="nav-section">Pharmacy</div>
+      <a href="{% url 'pharmacy:dashboard' %}" class="nav-link {% block nav_pharmacy %}{% endblock %}">
+        <span class="nav-icon">💊</span> Pharmacy
+      </a>
+      <a href="{% url 'pharmacy:pos' %}" class="nav-link {% block nav_pos %}{% endblock %}">
+        <span class="nav-icon">🖥️</span> Smart POS
+      </a>
+      <a href="{% url 'pharmacy:medicine_list' %}" class="nav-link {% block nav_medicines %}{% endblock %}">
+        <span class="nav-icon">💉</span> Medicines
+      </a>
+      <a href="{% url 'pharmacy:sale_list' %}" class="nav-link {% block nav_sales %}{% endblock %}">
+        <span class="nav-icon">🧾</span> Sales
+      </a>
+      {% endif %}
+
+      {% if nav_show_hr %}
+      <div class="nav-section">HR & Payroll</div>
+      <a href="{% url 'hr_payroll:dashboard' %}" class="nav-link {% block nav_hr %}{% endblock %}">
+        <span class="nav-icon">👥</span> HR Panel
+      </a>
+      <a href="{% url 'hr_payroll:employee_list' %}" class="nav-link {% block nav_employees %}{% endblock %}">
+        <span class="nav-icon">🪪</span> Employees
+      </a>
+      <a href="{% url 'hr_payroll:payroll_list' %}" class="nav-link {% block nav_payroll %}{% endblock %}">
+        <span class="nav-icon">💰</span> Payroll
+      </a>
+      {% endif %}
+
+      {% if nav_show_billing %}
+      <div class="nav-section">Billing</div>
+      <a href="{% url 'billing:dashboard' %}" class="nav-link {% block nav_billing %}{% endblock %}">
+        <span class="nav-icon">💳</span> Dashboard
+      </a>
+      <a href="{% url 'billing:invoice_list' %}" class="nav-link {% block nav_invoices %}{% endblock %}">
+        <span class="nav-icon">📄</span> Invoices
+      </a>
+      <a href="{% url 'billing:invoice_create' %}" class="nav-link {% block nav_new_invoice %}{% endblock %}">
+        <span class="nav-icon">➕</span> New Invoice
+      </a>
+      <a href="{% url 'billing:ledger_report' %}" class="nav-link {% block nav_ledger %}{% endblock %}">
+        <span class="nav-icon">📒</span> Ledger / Accounts
+      </a>
+      <a href="{% url 'billing:panel_list' %}" class="nav-link {% block nav_panels %}{% endblock %}">
+        <span class="nav-icon">🏥</span> Insurance Panels
+      </a>
+      <a href="{% url 'billing:claim_list' %}" class="nav-link {% block nav_claims %}{% endblock %}">
+        <span class="nav-icon">🗂️</span> Insurance Claims
+      </a>
+      {% endif %}
+
+      {% if nav_show_assets %}
+      <div class="nav-section">Assets</div>
+      <a href="{% url 'assets:dashboard' %}" class="nav-link {% block nav_assets %}{% endblock %}">
+        <span class="nav-icon">🛠️</span> Asset Dashboard
+      </a>
+      <a href="{% url 'assets:asset_list' %}" class="nav-link {% block nav_asset_list %}{% endblock %}">
+        <span class="nav-icon">📋</span> All Assets
+      </a>
+      {% endif %}
+
+      {% endif %}
+
+    </div><!-- /sidebar-scroll -->
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+        <div>
+          <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div class="user-role">
+            {% if request.user.is_superuser %}Super Admin
+            {% elif staff_role %}{{ staff_role|title }}
+            {% else %}Staff{% endif %}
+          </div>
+        </div>
+      </div>
+      <a href="{% url 'auth:logout' %}" class="btn-logout">🚪 Sign Out</a>
+    </div>
+
+  </aside>
+  <!-- ════════════ /SIDEBAR ════════════ -->
+
+
+  <!-- ════════════ MAIN ════════════ -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <main class="wms-main">
+
+    <!-- TOPBAR -->
+    <header class="wms-topbar">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button id="hamburger" class="hamburger-btn" aria-label="Open menu" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-muted);">☰</button>
+        <div>
+          <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+          <div class="page-subtitle">{% block page_subtitle %}{{ APP_NAME }}{% endblock %}</div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- SA Clinic-Viewing indicator -->
+        {% if is_sa_viewing %}
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:var(--radius-sm);">
+          <span style="font-size:13px;">📍 <strong>{{ current_clinic.name }}</strong></span>
+          <a href="{% url 'superadmin:clinic_exit' %}" class="btn btn-danger btn-sm" style="padding:3px 10px;font-size:11px;">Exit</a>
+        </div>
+        {% endif %}
+
+        <!-- Theme is platform-wide, set only by Super Admin — no per-user
+             switcher here anymore (see apps.core.models.PlatformSettings). -->
+        {% if request.user.is_superuser %}
+        <a href="{% url 'superadmin:platform_settings' %}" class="btn btn-secondary btn-sm" title="Change platform-wide theme">
+          🎨 Theme: {{ PLATFORM_THEME|title }}
+        </a>
+        {% endif %}
+
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </header>
+    <!-- /TOPBAR -->
+
+    <!-- PAGE CONTENT -->
+    <div class="wms-content">
+
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="alert alert-{% if msg.tags == 'success' %}success{% elif msg.tags == 'error' %}danger{% elif msg.tags == 'warning' %}warning{% else %}info{% endif %}" data-auto-dismiss>
+            {% if msg.tags == 'success' %}✅{% elif msg.tags == 'error' %}❌{% elif msg.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+            {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if subscription_status == 'grace' and is_clinic_admin %}
+        <div class="alert alert-warning">
+          ⚠️ Your subscription plan expires soon ({{ subscription_days_left }} day{{ subscription_days_left|pluralize }} remaining). Patient care and all modules continue normally — please renew to avoid interruption to new billing.
+        </div>
+      {% elif subscription_status == 'expired' and is_clinic_admin %}
+        <div class="alert alert-danger">
+          ⚠️ Your subscription has expired. All patient records, lab, doctor, pharmacy and reception access continue uninterrupted for patient safety. New billing invoices are paused until renewal — contact Wahabix Support to renew.
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="wms-footer">
+      <div>© {{ APP_YEAR }} <span class="footer-brand">{{ APP_NAME }}</span> — All rights reserved</div>
+      <div>Developed &amp; Designed by <span class="footer-brand">{{ APP_DEVELOPER }}</span> · v{{ APP_VERSION }}</div>
+    </footer>
+
+  </main>
+  <!-- ════════════ /MAIN ════════════ -->
+
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script src="/static/js/wms-app.js?v={{ APP_VERSION }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

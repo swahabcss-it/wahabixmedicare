@@ -1,0 +1,151 @@
+{% extends 'base/base.html' %}
+{% block title %}Smart POS{% endblock %}
+{% block nav_sales %}active{% endblock %}
+{% block page_title %}Smart Pharmacy POS{% endblock %}
+{% block page_subtitle %}Token Cart Fetch · Barcode Scan · Fast Search — Zero-Thinking Checkout{% endblock %}
+{% block topbar_actions %}<a href="{% url 'pharmacy:sale_list' %}" class="btn btn-secondary btn-sm">Sales History</a>{% endblock %}
+{% block content %}
+<div class="split-grid">
+
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">🟢 Token-Based Cart Fetch</div></div>
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="token-input" class="form-control" placeholder="Enter patient Token # / ID">
+      <button type="button" class="btn btn-primary" onclick="fetchCartByToken()">Fetch RX Cart</button>
+    </div>
+    <div id="rx-fetch-status" style="font-size:12.5px;color:var(--text-faint);margin-top:6px;"></div>
+
+    <div class="card-header" style="margin-top:20px;"><div class="card-title">🔫 Laser Gun Scan</div></div>
+    <input type="text" id="barcode-input" class="form-control" placeholder="Scan barcode (or type + Enter)" autofocus>
+    <div id="scan-status" style="font-size:12.5px;color:var(--text-faint);margin-top:6px;"></div>
+
+    <div class="card-header" style="margin-top:20px;"><div class="card-title">🔍 Fast-Search Autocomplete</div></div>
+    <input type="text" id="search-input" class="form-control" placeholder="Type first 2 letters (e.g. Pa)" autocomplete="off">
+    <div id="search-results" style="display:grid;gap:6px;margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">🛒 Cart</div></div>
+    <form method="POST" action="{% url 'pharmacy:sale_create' %}" id="pos-form">
+      {% csrf_token %}
+      <div class="form-group"><label class="form-label">Patient Name</label><input type="text" name="patient_name" id="patient_name" class="form-control" placeholder="Walk-in or auto-filled from token"></div>
+      <div id="cart-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+      <div id="cart-empty" style="color:var(--text-faint);font-size:13px;">Cart is empty — scan, search, or fetch a token to begin.</div>
+      <div class="form-group"><label class="form-label">Discount (Rs.)</label><input type="number" name="discount" id="discount" class="form-control" style="max-width:200px;" value="0" min="0" step="0.01" oninput="recalc()"></div>
+      <div style="text-align:right;font-size:15px;font-weight:700;color:var(--text-h);margin:10px 0;">Total: Rs. <span id="cart-total">0</span></div>
+      <button type="submit" class="btn btn-success btn-lg" style="width:100%;" id="checkout-btn" disabled>✅ Confirm Sale</button>
+    </form>
+  </div>
+</div>
+
+<script>
+let cart = {}; // medicine_id -> {name, price, stock, qty}
+
+function renderCart(){
+  const rows = document.getElementById('cart-rows');
+  const empty = document.getElementById('cart-empty');
+  rows.innerHTML = '';
+  const ids = Object.keys(cart);
+  empty.style.display = ids.length ? 'none' : 'block';
+  ids.forEach(id => {
+    const item = cart[id];
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);';
+    row.innerHTML = `
+      <div style="flex:1;">
+        <div style="font-weight:600;color:var(--text-h);">${item.name}</div>
+        <div style="font-size:11px;color:var(--text-faint);">Rs.${item.price} · Stock: ${item.stock}</div>
+      </div>
+      <input type="hidden" name="med_id" value="${id}">
+      <input type="number" name="med_qty" class="form-control" style="width:70px;" min="1" max="${item.stock}" value="${item.qty}" onchange="updateQty('${id}', this.value)">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="removeItem('${id}')">✕</button>
+    `;
+    rows.appendChild(row);
+  });
+  recalc();
+  document.getElementById('checkout-btn').disabled = ids.length === 0;
+}
+
+function updateQty(id, val){ cart[id].qty = Math.max(1, parseInt(val) || 1); recalc(); }
+function removeItem(id){ delete cart[id]; renderCart(); }
+function recalc(){
+  let total = 0;
+  Object.values(cart).forEach(i => total += i.qty * parseFloat(i.price));
+  const discount = parseFloat(document.getElementById('discount').value || 0);
+  document.getElementById('cart-total').textContent = Math.max(0, total - discount).toFixed(2);
+}
+
+function addToCart(id, name, price, stock){
+  if (stock <= 0) { if (window.WMSToast) WMSToast.error(`${name} is out of stock.`); return; }
+  if (cart[id]) { cart[id].qty = Math.min(stock, cart[id].qty + 1); }
+  else { cart[id] = {name, price, stock, qty: 1}; }
+  renderCart();
+}
+
+// ── Barcode scan (Enter key = scanner trigger) ──────────────────────────────
+document.getElementById('barcode-input').addEventListener('keydown', function(e){
+  if (e.key !== 'Enter') return;
+  const barcode = this.value.trim();
+  if (!barcode) return;
+  fetch(`{% url 'pharmacy:medicine_scan_ajax' %}?barcode=${encodeURIComponent(barcode)}`)
+    .then(r => r.json())
+    .then(data => {
+      const status = document.getElementById('scan-status');
+      if (data.found) {
+        addToCart(data.id, data.name, data.price, data.stock);
+        status.textContent = `✅ ${data.name} added — batch ${data.batch || '—'}, exp ${data.expiry || '—'}`;
+        status.style.color = 'var(--success)';
+      } else {
+        status.textContent = '❌ No medicine matches this barcode.';
+        status.style.color = 'var(--danger)';
+      }
+      this.value = '';
+    });
+});
+
+// ── Fast-search autocomplete ────────────────────────────────────────────────
+let searchTimer;
+document.getElementById('search-input').addEventListener('input', function(){
+  clearTimeout(searchTimer);
+  const q = this.value.trim();
+  const box = document.getElementById('search-results');
+  if (q.length < 2) { box.innerHTML = ''; return; }
+  searchTimer = setTimeout(() => {
+    fetch(`{% url 'pharmacy:medicine_search_ajax' %}?q=${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(data => {
+        box.innerHTML = '';
+        data.results.forEach(m => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-secondary btn-sm';
+          btn.style.textAlign = 'left';
+          btn.innerHTML = `${m.name} <span style="color:var(--text-faint);">— Rs.${m.price} · Stock ${m.stock}</span>`;
+          btn.onclick = () => { addToCart(m.id, m.name, m.price, m.stock); box.innerHTML=''; document.getElementById('search-input').value=''; };
+          box.appendChild(btn);
+        });
+      });
+  }, 250);
+});
+
+// ── Token-based cart fetch ───────────────────────────────────────────────────
+function fetchCartByToken(){
+  const tokenId = document.getElementById('token-input').value.trim();
+  const status = document.getElementById('rx-fetch-status');
+  if (!tokenId) return;
+  fetch(`/pharmacy/ajax/fetch-rx/${tokenId}/`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.found) { status.textContent = '❌ ' + (data.message || 'No prescription found.'); status.style.color = 'var(--danger)'; return; }
+      document.getElementById('patient_name').value = data.patient_name;
+      let matched = 0, unmatched = 0;
+      data.items.forEach(item => {
+        if (item.matched) { addToCart(item.medicine_id, item.medicine_name, item.price, item.stock); matched++; }
+        else { unmatched++; }
+      });
+      status.textContent = `✅ Loaded RX for ${data.patient_name} — ${matched} matched, ${unmatched} need manual add.`;
+      status.style.color = 'var(--success)';
+    });
+}
+</script>
+{% endblock %}

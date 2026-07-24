@@ -1,0 +1,43 @@
+{% extends 'base/base.html' %}
+{% block title %}Patient Queue{% endblock %}
+{% block nav_doctor %}active{% endblock %}
+{% block page_title %}Patient Queue{% endblock %}
+{% block page_subtitle %}{{ today|date:"l, d F Y" }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:dashboard' %}" class="btn btn-secondary btn-sm">← Dashboard</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">🎫 All Tokens Today</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Patient</th><th>Vitals</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for t in queue %}
+        <tr>
+          <td class="td-mono" style="font-size:18px;font-weight:800;">{{ t.token_number }}</td>
+          <td><div class="td-primary">{{ t.patient.full_name }}</div><div style="font-size:11px;color:var(--text-faint);">{{ t.patient.patient_id }} · {{ t.patient.age }}y {{ t.patient.get_gender_display }}</div><div style="font-size:11px;color:var(--text-faint);">{{ t.patient.phone }}</div></td>
+          <td style="font-size:12px;line-height:1.7;">
+            {% if t.blood_pressure %}<div>🩸 BP: {{ t.blood_pressure }}</div>{% endif %}
+            {% if t.pulse %}<div>💓 Pulse: {{ t.pulse }}</div>{% endif %}
+            {% if t.temperature %}<div>🌡️ Temp: {{ t.temperature }}°</div>{% endif %}
+            {% if t.weight %}<div>⚖️ Wt: {{ t.weight }}kg</div>{% endif %}
+            {% if not t.blood_pressure and not t.pulse and not t.temperature and not t.weight %}<span style="color:var(--text-faint)">—</span>{% endif %}
+          </td>
+          <td><span class="badge {% if t.status == 'waiting' %}badge-orange{% elif t.status == 'with_doctor' %}badge-blue{% elif t.status == 'done' %}badge-green{% else %}badge-red{% endif %}">{{ t.get_status_display }}</span></td>
+          <td>
+            {% if t.status == 'waiting' %}
+              <a href="{% url 'doctor:call_patient' t.pk %}" class="btn btn-primary btn-sm" data-confirm="Call {{ t.patient.full_name }} in?">📣 Call In</a>
+            {% elif t.status == 'with_doctor' %}
+              <a href="{% url 'doctor:prescription_create' t.pk %}" class="btn btn-success btn-sm">📝 Write Prescription</a>
+            {% else %}
+              <span style="font-size:12px;color:var(--text-faint);">{{ t.get_status_display }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🎉</div><div class="empty-state-title">Queue is empty</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Prescription — {{ rx.patient.full_name }}</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #111; background: #fff; font-size: 13px; line-height: 1.5;
+    max-width: 800px; margin: 0 auto; padding: 10px;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 10px;
+  }
+  .doc-info .doc-name { font-size: 19px; font-weight: 800; margin-bottom: 2px; }
+  .doc-info .doc-line { font-size: 12px; color: #333; }
+  .clinic-brand { text-align: right; }
+  .clinic-brand img { max-height: 46px; max-width: 160px; object-fit: contain; }
+  .clinic-brand .clinic-name { font-size: 16px; font-weight: 800; color: #0a6cb8; margin-top: 4px; }
+  .clinic-brand .clinic-tag { font-size: 10px; color: #666; }
+
+  .meta-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 1px solid #333; padding: 8px 0; margin-bottom: 8px; font-size: 12.5px;
+  }
+  .meta-row b { font-weight: 700; }
+
+  .section-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
+    border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 14px;
+  }
+  .section-row .section-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .section-row .section-body { font-size: 12.5px; color: #222; white-space: pre-wrap; }
+
+  .rx-body { display: flex; gap: 16px; min-height: 300px; }
+  .rx-symbol {
+    font-family: Georgia, serif; font-size: 30px; font-weight: 800;
+    border-right: 1px solid #999; padding-right: 14px; line-height: 1;
+  }
+  .rx-symbol sub { font-size: 15px; }
+  .rx-list { flex: 1; }
+  .med-item { margin-bottom: 16px; }
+  .med-item .med-name { font-weight: 700; font-size: 13.5px; }
+  .med-item .med-line { font-size: 12.5px; color: #333; margin-left: 20px; }
+  .med-item .med-urdu { direction: rtl; text-align: right; font-size: 13px; margin-top: 2px; margin-left: 20px; }
+
+  .footer {
+    margin-top: 30px; border-top: 1px solid #999; padding-top: 8px;
+    display: flex; justify-content: space-between; font-size: 11px; color: #555;
+  }
+  .signature { text-align: right; margin-top: 40px; font-size: 12px; }
+  .signature .sig-line { border-top: 1px solid #333; width: 200px; margin-left: auto; padding-top: 4px; }
+
+  .no-print { text-align: center; margin-top: 20px; }
+  .no-print button {
+    padding: 9px 22px; font-size: 13px; font-weight: 700; border-radius: 6px;
+    border: 1px solid #111; background: #111; color: #fff; cursor: pointer;
+  }
+  @media print { .no-print { display: none; } body { padding: 0; } }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="doc-info">
+      <div class="doc-name">Dr. {{ rx.doctor.user.get_full_name|default:rx.doctor.user.username }}</div>
+      <div class="doc-line">{{ rx.doctor.qualification }}</div>
+      <div class="doc-line">{{ rx.doctor.specialization }}</div>
+      {% if rx.doctor.pmdc_number %}<div class="doc-line">PMDC No: {{ rx.doctor.pmdc_number }}</div>{% endif %}
+    </div>
+    <div class="clinic-brand">
+      {% if clinic.logo %}<img src="{{ clinic.logo.url }}" alt="{{ clinic.name }}">{% endif %}
+      <div class="clinic-name">{{ clinic.name }}</div>
+      <div class="clinic-tag">{{ clinic.address }}</div>
+      {% if clinic.phone %}<div class="clinic-tag">☎ {{ clinic.phone }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="meta-row">
+    <div><b>Medical Record #:</b> {{ rx.patient.patient_id }}</div>
+    <div><b>Name:</b> {{ rx.patient.full_name }}</div>
+    <div><b>Gender:</b> {{ rx.patient.get_gender_display }}</div>
+  </div>
+  <div class="meta-row" style="border-bottom:2px solid #111;">
+    <div><b>Age:</b> {{ rx.patient.age }} Year(s)</div>
+    <div><b>Location:</b> {{ clinic.name }}</div>
+    <div><b>Date:</b> {{ rx.visit_date|date:"d M Y, g:i A" }}</div>
+  </div>
+
+  <div class="section-row">
+    <div>
+      <div class="section-title">Complaints</div>
+      <div class="section-body">{{ rx.symptoms|default:"—" }}</div>
+    </div>
+    <div>
+      <div class="section-title">Diagnosis</div>
+      <div class="section-body">{{ rx.diagnosis|default:"—" }}{% if rx.icd11_code %}<br><span style="color:#666;">ICD-11: {{ rx.icd11_code }}</span>{% endif %}</div>
+    </div>
+    <div>
+      <div class="section-title">Vitals</div>
+      <div class="section-body">
+        {% if token %}
+          BP: {{ token.blood_pressure|default:"—" }}<br>
+          Temp: {{ token.temperature|default:"—" }}<br>
+          Weight: {{ token.weight|default:"—" }}<br>
+          Pulse: {{ token.pulse|default:"—" }}
+        {% else %}—{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="rx-body">
+    <div class="rx-symbol">R<sub>X</sub></div>
+    <div class="rx-list">
+      {% for med in medicines %}
+      <div class="med-item">
+        <div class="med-name">{{ forloop.counter }}) {{ med.medicine_name|upper }}</div>
+        <div class="med-line">{{ med.dosage }} — {{ med.frequency }}{% if med.duration %} — {{ med.duration }}{% endif %}</div>
+        {% if med.instructions %}<div class="med-urdu">{{ med.instructions }}</div>{% endif %}
+      </div>
+      {% empty %}
+      <div style="color:#888;font-style:italic;">No medicines prescribed.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if rx.lab_order %}
+  <div style="margin-top:18px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:4px;">Investigations Advised:</div>
+    {% for test in rx.lab_order.tests.all %}
+    <div style="font-size:12.5px;margin-left:20px;">({{ forloop.counter }}) {{ test.test_name }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if rx.follow_up_date %}
+  <div style="margin-top:20px;font-size:12.5px;"><b>Follow-up:</b> {{ rx.follow_up_date|date:"d M Y" }}</div>
+  {% endif %}
+  {% if rx.notes %}
+  <div style="margin-top:8px;font-size:12.5px;"><b>Notes:</b> {{ rx.notes }}</div>
+  {% endif %}
+
+  <div class="signature">
+    <div class="sig-line">Dr. {{ rx.doctor.user.get_full_name|default:rx.doctor.user.username }}</div>
+  </div>
+
+  <div class="footer" style="flex-direction:column;gap:2px;text-align:left;">
+    <div style="font-weight:700;">NOT VALID FOR COURT</div>
+    <div>✅ Prescribed by: Dr. {{ rx.doctor.user.get_full_name|default:rx.doctor.user.username }} ({{ rx.created_at|date:"d-M-Y H:i" }})</div>
+    <div style="font-style:italic;">This is a digitally verified prescription and does not require a signature.</div>
+    <div style="margin-top:6px;">Wahabix Medicare Solution — {{ clinic.name }} · RX-{{ rx.pk|stringformat:"04d" }}</div>
+  </div>
+
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Print Prescription</button>
+  </div>
+
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 250);
+  });
+</script>
+</body>
+</html>

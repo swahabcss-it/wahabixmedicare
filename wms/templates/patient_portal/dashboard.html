@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ PLATFORM_THEME|default:'dark' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Health Records — Patient Portal</title>
+<link rel="stylesheet" href="/static/css/wms-theme.css?v={{ APP_VERSION }}">
+<style>
+body{padding:0;margin:0;}
+.pp-topbar{
+  display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
+  background:var(--bg-card);border-bottom:1px solid var(--border);
+}
+.pp-brand{display:flex;align-items:center;gap:12px;}
+.pp-brand .icon{
+  width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:#04281f;
+}
+.pp-brand h1{font-size:16px;color:var(--text-h);margin:0;}
+.pp-brand p{font-size:12px;color:var(--text-faint);margin:0;}
+.pp-wrap{max-width:1000px;margin:0 auto;padding:28px 20px 60px;}
+.pp-patient-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;
+  display:flex;gap:24px;flex-wrap:wrap;margin-bottom:28px;
+}
+.pp-patient-card .field{font-size:13px;}
+.pp-patient-card .field label{display:block;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;}
+.pp-patient-card .field .val{color:var(--text-h);font-weight:700;}
+.pp-section{margin-bottom:32px;}
+.pp-section h2{font-size:16px;color:var(--text-h);margin:0 0 14px;display:flex;align-items:center;gap:8px;}
+</style>
+</head>
+<body>
+
+<div class="pp-topbar">
+  <div class="pp-brand">
+    <div class="icon">🧑‍⚕️</div>
+    <div>
+      <h1>My Health Records</h1>
+      <p>Patient Portal</p>
+    </div>
+  </div>
+  <a href="{% url 'patient_portal:logout' %}" class="btn btn-secondary btn-sm">🚪 Sign Out</a>
+</div>
+
+<div class="pp-wrap">
+
+  <div class="pp-patient-card">
+    <div class="field"><label>Name</label><div class="val">{{ patient.full_name }}</div></div>
+    <div class="field"><label>Patient ID</label><div class="val">{{ patient.patient_id }}</div></div>
+    <div class="field"><label>Age / Gender</label><div class="val">{{ patient.age }} yrs / {{ patient.get_gender_display }}</div></div>
+    <div class="field"><label>Blood Group</label><div class="val">{{ patient.blood_group|default:"—" }}</div></div>
+    <div class="field"><label>Phone</label><div class="val">{{ patient.phone }}</div></div>
+  </div>
+
+  <div class="pp-section">
+    <h2>📝 My Prescriptions</h2>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th></th></tr></thead>
+          <tbody>
+            {% for rx in prescriptions %}
+            <tr>
+              <td>{{ rx.visit_date|date:"d M Y" }}</td>
+              <td class="td-primary">Dr. {{ rx.doctor.user.get_full_name|default:rx.doctor.user.username }}</td>
+              <td>{{ rx.diagnosis|truncatechars:40 }}</td>
+              <td>
+                <a href="{% url 'patient_portal:view_prescription' rx.pk %}" target="_blank" class="btn btn-secondary btn-sm">👁️ View</a>
+                <a href="{% url 'patient_portal:view_prescription' rx.pk %}?download=1" class="btn btn-success btn-sm">⬇️ Download</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty-state"><div class="empty-state-title">No prescriptions yet</div></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="pp-section">
+    <h2>🔬 My Lab Reports</h2>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Voucher</th><th>Tests</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            {% for o in lab_orders %}
+            <tr>
+              <td class="td-mono">{{ o.voucher_code }}</td>
+              <td>{{ o.tests.count }} test(s)</td>
+              <td>{{ o.ordered_at|date:"d M Y" }}</td>
+              <td>
+                <a href="{% url 'patient_portal:view_lab_report' o.pk %}" target="_blank" class="btn btn-secondary btn-sm">👁️ View</a>
+                <a href="{% url 'patient_portal:view_lab_report' o.pk %}?download=1" class="btn btn-success btn-sm">⬇️ Download</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty-state"><div class="empty-state-title">No completed lab reports yet</div></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="pp-section">
+    <h2>📈 Test History &amp; Trends</h2>
+    <div class="card">
+      {% if history_by_test %}
+        {% for test_name, results in history_by_test.items %}
+        <div style="margin-bottom:18px;">
+          <div style="font-weight:700;color:var(--text-h);font-size:13.5px;margin-bottom:6px;">{{ test_name }}</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Result</th><th>Reference Range</th><th>Flag</th></tr></thead>
+              <tbody>
+                {% for r in results %}
+                <tr>
+                  <td style="font-size:12px;">{{ r.order.ordered_at|date:"d M Y" }}</td>
+                  <td class="{% if r.is_abnormal %}td-primary{% endif %}" style="{% if r.is_abnormal %}color:var(--danger);font-weight:700;{% endif %}">{{ r.result_value }}</td>
+                  <td style="font-size:12px;color:var(--text-faint);">{{ r.test.reference_range|truncatechars:40 }}</td>
+                  <td>{% if r.is_abnormal %}<span class="badge badge-red">⚠ Abnormal</span>{% else %}<span class="badge badge-green">Normal</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><div class="empty-state-title">No test history yet</div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="pp-section">
+    <h2>🧾 My Invoices</h2>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Invoice #</th><th>Amount</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            {% for inv in invoices %}
+            <tr>
+              <td class="td-mono">{{ inv.invoice_number }}</td>
+              <td style="font-weight:700;">Rs.{{ inv.total|floatformat:0 }}</td>
+              <td><span class="badge {% if inv.status == 'paid' %}badge-green{% else %}badge-orange{% endif %}">{{ inv.get_status_display }}</span></td>
+              <td>{{ inv.created_at|date:"d M Y" }}</td>
+              <td>
+                <a href="{% url 'patient_portal:view_invoice' inv.pk %}" target="_blank" class="btn btn-secondary btn-sm">👁️ View</a>
+                <a href="{% url 'patient_portal:view_invoice' inv.pk %}?download=1" class="btn btn-success btn-sm">⬇️ Download</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-title">No invoices yet</div></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="/static/js/wms-app.js?v={{ APP_VERSION }}"></script>
+</body>
+</html>

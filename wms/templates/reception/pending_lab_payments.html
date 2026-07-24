@@ -1,0 +1,63 @@
+{% extends 'base/base.html' %}
+{% block title %}Pending Lab Payments{% endblock %}
+{% block nav_reception_labpay %}active{% endblock %}
+{% block page_title %}Pending Lab Payments{% endblock %}
+{% block page_subtitle %}Invoices auto-created when a doctor orders lab tests — collect payment here{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">⏳ Awaiting Payment</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Invoice #</th><th>Patient</th><th>Voucher</th><th class="th-num">Amount</th><th>Ordered</th><th></th></tr></thead>
+      <tbody>
+        {% for inv in pending_invoices %}
+        <tr>
+          <td class="td-mono">{{ inv.invoice_number }}</td>
+          <td class="td-primary">{{ inv.patient.full_name }}</td>
+          <td class="td-mono">{{ inv.lab_order.voucher_code }}</td>
+          <td class="td-num">Rs.{{ inv.total|floatformat:0 }}</td>
+          <td style="font-size:12px;">{{ inv.created_at|date:"d M Y, h:i A" }}</td>
+          <td style="white-space:nowrap;">
+            <a href="{% url 'billing:invoice_pdf' inv.pk %}" target="_blank" class="btn btn-secondary btn-sm" title="View / Download Invoice">🧾</a>
+            <button type="button" class="btn btn-secondary btn-sm" title="Print" onclick="wmsSilentPrint('{% url 'billing:invoice_pdf' inv.pk %}')">🖨️</button>
+            <form method="post" action="{% url 'reception:collect_lab_payment' inv.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success btn-sm" data-confirm="Confirm Rs.{{ inv.total|floatformat:0 }} collected from {{ inv.patient.full_name }}?">💰 Collect Payment</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">No pending lab payments</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">✅ Recently Collected</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Invoice #</th><th>Patient</th><th>Voucher</th><th class="th-num">Amount</th><th>Collected</th><th></th></tr></thead>
+      <tbody>
+        {% for inv in recently_collected %}
+        <tr>
+          <td class="td-mono">{{ inv.invoice_number }}</td>
+          <td class="td-primary">{{ inv.patient.full_name }}</td>
+          <td class="td-mono">{{ inv.lab_order.voucher_code }}</td>
+          <td class="td-num">Rs.{{ inv.total|floatformat:0 }}</td>
+          <td style="font-size:12px;">{{ inv.created_at|date:"d M Y, h:i A" }}</td>
+          <td>
+            <a href="{% url 'billing:invoice_pdf' inv.pk %}" target="_blank" class="btn btn-secondary btn-sm" title="View">🧾 View</a>
+            <a href="{% url 'billing:invoice_pdf' inv.pk %}?download=1" class="btn btn-success btn-sm" title="Download">⬇️ Download</a>
+            <button type="button" class="btn btn-secondary btn-sm" title="Print" onclick="wmsSilentPrint('{% url 'billing:invoice_pdf' inv.pk %}')">🖨️ Print</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state"><div class="empty-state-title">Nothing collected yet</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

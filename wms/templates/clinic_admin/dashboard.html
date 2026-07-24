@@ -1,0 +1,142 @@
+{% extends 'base/base.html' %}
+{% block title %}Clinic Admin Dashboard{% endblock %}
+{% block nav_ca_dash %}active{% endblock %}
+{% block page_title %}Clinic Admin Dashboard{% endblock %}
+{% block page_subtitle %}{{ clinic.name }} — Management Overview{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'clinic_admin:staff_create' %}" class="btn btn-primary btn-sm">➕ Add Staff</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">👥</div>
+    <div>
+      <div class="stat-num" data-target="{{ total_staff }}">0</div>
+      <div class="stat-label">Total Staff</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">✅</div>
+    <div>
+      <div class="stat-num" data-target="{{ active_staff }}">0</div>
+      <div class="stat-label">Active Staff</div>
+    </div>
+  </div>
+  {% if quick_stats.patients_today is not None %}
+  <div class="stat-card">
+    <div class="stat-icon purple">👤</div>
+    <div>
+      <div class="stat-num" data-target="{{ quick_stats.patients_today }}">0</div>
+      <div class="stat-label">Patients Today</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">🎫</div>
+    <div>
+      <div class="stat-num" data-target="{{ quick_stats.tokens_today }}">0</div>
+      <div class="stat-label">Tokens Today</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- STAFF BREAKDOWN -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">👥 Staff by Role</div>
+        <div class="card-subtitle">Roster composition at {{ clinic.name }}</div>
+      </div>
+      <a href="{% url 'clinic_admin:staff_list' %}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    {% if role_breakdown %}
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      {% for label, count in role_breakdown %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:13.5px;">{{ label }}</span>
+        <span class="badge badge-blue">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:24px;">
+      <div class="empty-state-icon">👥</div>
+      <div class="empty-state-title">No Staff Yet</div>
+      <a href="{% url 'clinic_admin:staff_create' %}" class="btn btn-primary btn-sm">➕ Add First Staff Member</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- MODULE QUICK-LAUNCH -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⚙️ Your Modules</div>
+      <div class="card-subtitle">Click any module to open it directly</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      {% if nav_show_reception %}
+      <a href="{% url 'reception:dashboard' %}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:22px;">🏪</span><div><div style="font-weight:700;font-size:13px;">Reception</div><div style="font-size:11px;color:var(--text-faint);">Patients & Tokens</div></div>
+      </a>
+      {% endif %}
+      {% if nav_show_doctor %}
+      <a href="{% url 'doctor:dashboard' %}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:22px;">👨‍⚕️</span><div><div style="font-weight:700;font-size:13px;">Doctor</div><div style="font-size:11px;color:var(--text-faint);">Queue & Prescriptions</div></div>
+      </a>
+      {% endif %}
+      {% if nav_show_lab %}
+      <a href="{% url 'laboratory:dashboard' %}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:22px;">🔬</span><div><div style="font-weight:700;font-size:13px;">Laboratory</div><div style="font-size:11px;color:var(--text-faint);">Tests & Results</div></div>
+      </a>
+      {% endif %}
+      {% if nav_show_pharmacy %}
+      <a href="{% url 'pharmacy:dashboard' %}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:22px;">💊</span><div><div style="font-weight:700;font-size:13px;">Pharmacy</div><div style="font-size:11px;color:var(--text-faint);">Medicines & Sales</div></div>
+      </a>
+      {% endif %}
+      {% if nav_show_hr %}
+      <a href="{% url 'hr_payroll:dashboard' %}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:22px;">👥</span><div><div style="font-weight:700;font-size:13px;">HR & Payroll</div><div style="font-size:11px;color:var(--text-faint);">Employees & Slips</div></div>
+      </a>
+      {% endif %}
+      {% if nav_show_billing %}
+      <a href="{% url 'billing:dashboard' %}" style="text-decoration:none;display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg-hover);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <span style="font-size:22px;">💳</span><div><div style="font-weight:700;font-size:13px;">Billing</div><div style="font-size:11px;color:var(--text-faint);">Invoices & Accounts</div></div>
+      </a>
+      {% endif %}
+    </div>
+    <div class="form-hint" style="margin-top:10px;">Module entitlements are managed by Wahabix Support. Contact them to add or change modules on your plan.</div>
+  </div>
+</div>
+
+<!-- RECENT ACTIVITY -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">📋 Recent Activity</div>
+    <div class="card-subtitle">{{ clinic.name }} audit trail</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for log in recent_logs %}
+        <tr>
+          <td style="font-size:12px;white-space:nowrap;">{{ log.timestamp|date:"d M, H:i" }}</td>
+          <td><span class="badge badge-blue">{{ log.user|default:"System" }}</span></td>
+          <td class="td-primary">{{ log.action }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center;padding:24px;color:var(--text-faint);">No activity logged yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

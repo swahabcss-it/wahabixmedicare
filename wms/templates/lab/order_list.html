@@ -1,0 +1,67 @@
+{% extends 'base/base.html' %}
+{% block title %}Lab Orders{% endblock %}
+{% block nav_orders %}active{% endblock %}
+{% block page_title %}Lab Orders{% endblock %}
+{% block page_subtitle %}All diagnostic orders{% endblock %}
+{% block topbar_actions %}<a href="{% url 'laboratory:order_create' %}" class="btn btn-primary btn-sm">🔬 New Order</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">📝 All Orders</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">🔍</span><input type="text" id="ord-search" placeholder="Search voucher or patient…"></div>
+  </div>
+  <div class="table-wrap">
+    <table id="ord-table">
+      <thead><tr><th>Voucher</th><th>Patient</th><th>Doctor</th><th>Tests</th><th class="th-num">Amount</th><th>Payment</th><th>Sample</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td><span class="badge badge-teal td-mono">{{ o.voucher_code }}</span></td>
+          <td class="td-primary">{{ o.patient.full_name }}</td>
+          <td style="font-size:12px;">{{ o.doctor_name|default:"—" }}</td>
+          <td><span class="badge badge-blue">{{ o.tests.count }} test(s)</span></td>
+          <td class="td-num">Rs.{{ o.total_amount|floatformat:0 }}</td>
+          <td>
+            {% if o.is_payment_cleared %}<span class="badge badge-green">✅ Paid</span>{% else %}<span class="badge badge-orange">⏳ Pending</span>{% endif %}
+          </td>
+          <td>
+            {% if o.sample_collected %}<span class="badge badge-teal" title="{{ o.sample_collected_at|date:'d M Y, h:i A' }}">🧪 Collected</span>{% else %}<span class="badge badge-gray">— Not yet</span>{% endif %}
+          </td>
+          <td>
+            <span class="badge {% if o.status == 'completed' %}badge-green{% elif o.status == 'processing' %}badge-blue{% elif o.status == 'delivered' %}badge-teal{% else %}badge-orange{% endif %}">
+              {{ o.get_status_display }}
+            </span>
+          </td>
+          <td style="font-size:12px;">{{ o.ordered_at|date:"d M Y" }}</td>
+          <td>
+            {% if not o.is_payment_cleared %}
+              <span class="badge badge-orange" title="Payment pending at Reception">⏳ Awaiting Payment</span>
+            {% elif not o.sample_collected %}
+              <form method="post" action="{% url 'laboratory:mark_sample_collected' o.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-sm" data-confirm="Confirm sample collected for {{ o.patient.full_name }}?">🧪 Mark Sample Collected</button>
+              </form>
+            {% else %}
+              <a href="{% url 'laboratory:result_entry' o.pk %}" class="btn {% if o.status == 'completed' or o.status == 'delivered' %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">
+                {% if o.status == 'completed' or o.status == 'delivered' %}👁️ View{% else %}📋 Enter Results{% endif %}
+              </a>
+            {% endif %}
+            {% if o.status == 'completed' or o.status == 'delivered' %}
+            <a href="{% url 'laboratory:result_pdf' o.pk %}" class="btn btn-success btn-sm" target="_blank" title="View PDF">📄</a>
+            <a href="{% url 'laboratory:result_pdf' o.pk %}?download=1" class="btn btn-secondary btn-sm" title="Download PDF">⬇️</a>
+            <button type="button" class="btn btn-secondary btn-sm" title="Print" onclick="wmsSilentPrint('{% url 'laboratory:result_pdf' o.pk %}')">🖨️</button>
+            {% endif %}
+            {% if request.user.staff_profile.can_delete_lab_results %}
+            <a href="{% url 'laboratory:order_soft_delete' o.pk %}" class="btn btn-secondary btn-sm" data-confirm="Archive this order? It stays in the audit trail but disappears from active lists.">🗑</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">🔬</div><div class="empty-state-title">No orders yet</div><a href="{% url 'laboratory:order_create' %}" class="btn btn-primary btn-sm">Create First Order</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('ord-search','ord-table',[0,1,2]);</script>{% endblock %}
