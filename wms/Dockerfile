@@ -12,9 +12,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# collectstatic needs a SECRET_KEY at build time — a throwaway is fine here,
-# the real one comes from the .env file / environment at runtime.
-RUN SECRET_KEY=build-time-placeholder-not-used-at-runtime DEBUG=False \
+# Set Django settings module explicitly
+ENV DJANGO_SETTINGS_MODULE=config.settings
+
+# Add dummy DATABASE_URL and SECRET_KEY during build time
+RUN SECRET_KEY=build-time-placeholder-not-used-at-runtime \
+    DEBUG=False \
+    DATABASE_URL=sqlite:////tmp/db.sqlite3 \
     python manage.py collectstatic --noinput
 
 EXPOSE 8000
