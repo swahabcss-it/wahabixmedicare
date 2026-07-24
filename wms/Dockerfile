@@ -12,15 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV DJANGO_SETTINGS_MODULE=config.settings
-
-# Pass dummy values for python-decouple during collectstatic
-RUN SECRET_KEY="build-time-placeholder" \
-    DEBUG="False" \
-    ALLOWED_HOSTS="*" \
-    DATABASE_URL="sqlite:////tmp/db.sqlite3" \
-    python manage.py collectstatic --noinput
-
 EXPOSE 8000
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# Container start hote hi collectstatic aur gunicorn ek saath chalenge
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
