@@ -138,7 +138,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+# Static Files Compression for Super Fast Loading
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
+# Static file caching (Browser fast load karega)
+WHITENOISE_MAX_AGE = 31536000  # 1 year caching
 # Django 4.2+ / 5.0+ Storage Setting
 STORAGES = {
     "default": {

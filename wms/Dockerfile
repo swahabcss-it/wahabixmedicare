@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 8000
 
 # Execute directly from /app root
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_demo_data && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_demo_data && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --threads 2"]
