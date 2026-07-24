@@ -131,21 +131,23 @@ USE_I18N = True
 USE_TZ = True
 
 
-# BASE_DIR setup
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Static files (CSS, JavaScript, Images)
+# STATIC FILES CONFIGURATION
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Django static files directories (Path syntax)
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-    BASE_DIR / 'wms' / 'static',
 ]
 
-# WhiteNoise Storage for Production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Django 4.2+ / 5.0+ Storage Setting
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 #STATIC_URL = '/static/'
 #STATICFILES_DIRS = [BASE_DIR / 'static']
