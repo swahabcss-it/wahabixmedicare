@@ -12,13 +12,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Set Django settings module explicitly
 ENV DJANGO_SETTINGS_MODULE=config.settings
 
-# Add dummy DATABASE_URL and SECRET_KEY during build time
-RUN SECRET_KEY=build-time-placeholder-not-used-at-runtime \
-    DEBUG=False \
-    DATABASE_URL=sqlite:////tmp/db.sqlite3 \
+# Pass dummy values for python-decouple during collectstatic
+RUN SECRET_KEY="build-time-placeholder" \
+    DEBUG="False" \
+    ALLOWED_HOSTS="*" \
+    DATABASE_URL="sqlite:////tmp/db.sqlite3" \
     python manage.py collectstatic --noinput
 
 EXPOSE 8000
