@@ -1,6 +1,7 @@
 from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,7 +40,8 @@ if BASE_DOMAIN:
     ALLOWED_HOSTS.append(f'.{BASE_DOMAIN}')
 
 # Shared secret for Direct Analyzer Interfacing webhook (Lab machines push results here).
-ANALYZER_API_KEY = config('ANALYZER_API_KEY', default='')
+#ANALYZER_API_KEY = config('ANALYZER_API_KEY', default='')
+ANALYZER_API_KEY = config('ANALYZER_API_KEY', default='wahabix-medicare-default-analyzer-key')
 
 # WhatsApp notifications — see apps/core/services/notifications.py.
 # Empty by default (safe no-op) until you have a real WhatsApp Business
@@ -128,9 +130,13 @@ TIME_ZONE = 'Asia/Karachi'
 USE_I18N = True
 USE_TZ = True
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+#STATIC_URL = '/static/'
+#STATICFILES_DIRS = [BASE_DIR / 'static']
+#STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # This app has repeatedly broken with "no CSS at all" whenever DEBUG=False
 # and `collectstatic` hadn't been run — WhiteNoise's default Manifest
@@ -200,7 +206,7 @@ LOGIN_ATTEMPT_WINDOW_SECONDS = config('LOGIN_ATTEMPT_WINDOW_SECONDS', default=30
 
 # ── App metadata ─────────────────────────────────────────────────────────
 APP_NAME = "Wahabix Medicare Solution"
-APP_VERSION = "4.6"
+APP_VERSION = "1.0"
 APP_DEVELOPER = "WAHABIX (Shah Abdul Wahab)"
 APP_YEAR = "2026"
 
