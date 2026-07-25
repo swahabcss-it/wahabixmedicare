@@ -66,6 +66,73 @@ def contains_urdu(text: str) -> bool:
     return bool(text) and bool(_URDU_RANGE.search(text))
 
 
+_NUM_RANGE_PATTERNS = [
+    # "70-140", "70 – 140", "3.4 - 7.0 mg/dL" — two numbers = low/high band
+    _re.compile(r'(-?\d+\.?\d*)\s*(?:-|–|to)\s*(-?\d+\.?\d*)'),
+]
+_LESS_THAN_PATTERN = _re.compile(r'(?:normal:?\s*)?<\s*=?\s*(-?\d+\.?\d*)')
+_GREATER_THAN_PATTERN = _re.compile(r'(?:normal:?\s*)?>\s*=?\s*(-?\d+\.?\d*)')
+
+
+def auto_detect_abnormal(result_value: str, reference_range: str):
+    """
+    Determines whether a numeric result falls outside its reference range,
+    parsed straight from the free-text range (handles the common patterns
+    lab staff actually type: "70-140 mg/dL", "3.4 - 7.0", "Normal: < 5.7",
+    "< 200 mg/dL", etc). Returns True/False when it can tell, or None when
+    the range/result isn't numeric (e.g. "Negative", "Non-Reactive",
+    "Normal Sinus Rhythm") — those stay exactly as manually flagged.
+
+    This exists because relying purely on a person remembering to tick an
+    "abnormal" checkbox at data-entry time is exactly the kind of thing
+    that gets missed under real clinic workload — a genuinely out-of-range
+    number should never silently print looking "normal".
+    """
+    if not result_value or not reference_range:
+        return None
+    try:
+        value = float(_re.sub(r'[^\d.\-]', '', result_value.strip().split()[0]))
+    except (ValueError, IndexError):
+        return None
+
+    range_match = _NUM_RANGE_PATTERNS[0].search(reference_range)
+    if range_match:
+        try:
+            low, high = float(range_match.group(1)), float(range_match.group(2))
+            if low > high:
+                low, high = high, low
+            return value < low or value > high
+        except ValueError:
+            pass
+
+    lt_match = _LESS_THAN_PATTERN.search(reference_range)
+    if lt_match:
+        try:
+            return value >= float(lt_match.group(1))
+        except ValueError:
+            pass
+
+    gt_match = _GREATER_THAN_PATTERN.search(reference_range)
+    if gt_match:
+        try:
+            return value <= float(gt_match.group(1))
+        except ValueError:
+            pass
+
+    return None
+
+
+def is_result_abnormal(result) -> bool:
+    """Auto-detected abnormality takes precedence over the manual flag
+    whenever the reference range is actually numeric/parseable — a real
+    out-of-range number should never be shown as normal just because no
+    one ticked a box. Falls back to the manual flag for non-numeric
+    results (Negative/Positive/Reactive/etc) where auto-detection can't
+    apply."""
+    auto = auto_detect_abnormal(getattr(result, 'result_value', ''), getattr(result.test, 'reference_range', ''))
+    return auto if auto is not None else result.is_abnormal
+
+
 def safe_instruction_text(text: str) -> str:
     """
     Returns text safe to render in the PDF's default (Helvetica) font.
@@ -520,15 +587,16 @@ class LabReportPDF(BaseClinicPDF):
                 last_val = f"{last_result.result_value}\n({last_result.order.ordered_at.strftime('%d-%b-%Y')})" if last_result else '—'
 
                 if res:
-                    result_style = S_DANGER if res.is_abnormal else S_TD
+                    abnormal = is_result_abnormal(res)
+                    result_style = S_DANGER if abnormal else S_TD
                     data.append([
                         Paragraph(test.test_name, S_TD),
-                        Paragraph(f"<b>{res.result_value}</b>" if res.is_abnormal else res.result_value, result_style),
+                        Paragraph(f"<b>{res.result_value}</b>" if abnormal else res.result_value, result_style),
                         Paragraph(last_val, S_SMALL),
                         Paragraph(test.unit or '—', S_TD_C),
                         Paragraph(test.reference_range, S_TD),
                     ])
-                    if res.is_abnormal:
+                    if abnormal:
                         row_styles.append(('abnormal', len(data) - 1))
                 else:
                     data.append([

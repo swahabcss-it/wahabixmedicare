@@ -59,6 +59,7 @@ class Token(TenantBaseModel):
     STATUS = [
         ('waiting','Waiting'),
         ('with_doctor','With Doctor'),
+        ('sent_to_lab','Sent to Lab (Pre-Consultation)'),
         ('done','Done'),
         ('cancelled','Cancelled'),
     ]
@@ -67,6 +68,7 @@ class Token(TenantBaseModel):
     doctor = models.ForeignKey('doctor.DoctorProfile', on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS, default='waiting')
     visit_date = models.DateField(auto_now_add=True)
+    called_at = models.DateTimeField(null=True, blank=True, help_text='When the doctor called this token in — drives the waiting-room display board')
     fee_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     # The token doubles as the reception invoice/receipt — created
     # automatically the moment the fee is collected at the counter.

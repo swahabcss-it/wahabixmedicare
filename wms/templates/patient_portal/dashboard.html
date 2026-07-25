@@ -119,9 +119,9 @@ body{padding:0;margin:0;}
                 {% for r in results %}
                 <tr>
                   <td style="font-size:12px;">{{ r.order.ordered_at|date:"d M Y" }}</td>
-                  <td class="{% if r.is_abnormal %}td-primary{% endif %}" style="{% if r.is_abnormal %}color:var(--danger);font-weight:700;{% endif %}">{{ r.result_value }}</td>
+                  <td class="{% if r.display_abnormal %}td-primary{% endif %}" style="{% if r.display_abnormal %}color:var(--danger);font-weight:700;{% endif %}">{{ r.result_value }}</td>
                   <td style="font-size:12px;color:var(--text-faint);">{{ r.test.reference_range|truncatechars:40 }}</td>
-                  <td>{% if r.is_abnormal %}<span class="badge badge-red">⚠ Abnormal</span>{% else %}<span class="badge badge-green">Normal</span>{% endif %}</td>
+                  <td>{% if r.display_abnormal %}<span class="badge badge-red">⚠ Abnormal</span>{% else %}<span class="badge badge-green">Normal</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
               </tbody>

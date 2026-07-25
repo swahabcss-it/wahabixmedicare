@@ -85,7 +85,9 @@ def dashboard(request):
         .order_by('test__test_name', '-order__ordered_at')
     )
     history_by_test = {}
+    from apps.core.services.pdf_service import is_result_abnormal
     for r in results_history:
+        r.display_abnormal = is_result_abnormal(r)
         history_by_test.setdefault(r.test.test_name, []).append(r)
 
     return render(request, 'patient_portal/dashboard.html', {

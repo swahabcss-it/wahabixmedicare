@@ -3,7 +3,7 @@
 {% block nav_doctor %}active{% endblock %}
 {% block page_title %}Patient Queue{% endblock %}
 {% block page_subtitle %}{{ today|date:"l, d F Y" }}{% endblock %}
-{% block topbar_actions %}<a href="{% url 'doctor:dashboard' %}" class="btn btn-secondary btn-sm">← Dashboard</a>{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:display_board' %}" class="btn btn-secondary btn-sm" target="_blank">📺 Display Board</a> <a href="{% url 'doctor:dashboard' %}" class="btn btn-secondary btn-sm">← Dashboard</a>{% endblock %}
 {% block content %}
 <div class="card">
   <div class="card-header"><div class="card-title">🎫 All Tokens Today</div></div>
@@ -22,12 +22,17 @@
             {% if t.weight %}<div>⚖️ Wt: {{ t.weight }}kg</div>{% endif %}
             {% if not t.blood_pressure and not t.pulse and not t.temperature and not t.weight %}<span style="color:var(--text-faint)">—</span>{% endif %}
           </td>
-          <td><span class="badge {% if t.status == 'waiting' %}badge-orange{% elif t.status == 'with_doctor' %}badge-blue{% elif t.status == 'done' %}badge-green{% else %}badge-red{% endif %}">{{ t.get_status_display }}</span></td>
+          <td><span class="badge {% if t.status == 'waiting' %}badge-orange{% elif t.status == 'with_doctor' %}badge-blue{% elif t.status == 'sent_to_lab' %}badge-teal{% elif t.status == 'done' %}badge-green{% else %}badge-red{% endif %}">
+            {% if t.status == 'sent_to_lab' %}🧪 {% endif %}{{ t.get_status_display }}
+          </span></td>
           <td>
             {% if t.status == 'waiting' %}
               <a href="{% url 'doctor:call_patient' t.pk %}" class="btn btn-primary btn-sm" data-confirm="Call {{ t.patient.full_name }} in?">📣 Call In</a>
             {% elif t.status == 'with_doctor' %}
               <a href="{% url 'doctor:prescription_create' t.pk %}" class="btn btn-success btn-sm">📝 Write Prescription</a>
+              <a href="{% url 'doctor:send_to_lab_first' t.pk %}" class="btn btn-secondary btn-sm" title="Get tests done before writing the prescription">🧪 Send to Lab First</a>
+            {% elif t.status == 'sent_to_lab' %}
+              <span style="font-size:12px;color:var(--text-faint);">⏳ Awaiting lab results — will return automatically</span>
             {% else %}
               <span style="font-size:12px;color:var(--text-faint);">{{ t.get_status_display }}</span>
             {% endif %}

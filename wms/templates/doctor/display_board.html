@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ PLATFORM_THEME|default:'dark' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Now Serving — Display Board</title>
+<link rel="stylesheet" href="/static/css/wms-theme.css?v={{ APP_VERSION }}">
+<style>
+  body{margin:0;background:#000;color:#fff;font-family:'Segoe UI',sans-serif;height:100vh;overflow:hidden;}
+  .board-wrap{display:flex;height:100vh;}
+  .now-serving{
+    flex:2;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at center, rgba(0,212,170,.12) 0%, transparent 70%);
+    border-right:2px solid #222;
+  }
+  .ns-label{font-size:28px;letter-spacing:6px;color:#00d4aa;font-weight:800;margin-bottom:20px;text-transform:uppercase;}
+  .ns-number{font-size:220px;font-weight:900;line-height:1;color:#fff;text-shadow:0 0 60px rgba(0,212,170,.5);}
+  .ns-name{font-size:42px;color:#e6edf3;margin-top:16px;font-weight:600;}
+  .ns-empty{font-size:36px;color:#555;}
+  .waiting-panel{flex:1;padding:40px;display:flex;flex-direction:column;}
+  .waiting-panel h2{font-size:22px;letter-spacing:2px;color:#8b949e;text-transform:uppercase;margin:0 0 24px;}
+  .wait-item{
+    display:flex;align-items:center;gap:16px;padding:14px 18px;margin-bottom:10px;
+    background:#111;border-radius:10px;border:1px solid #222;
+  }
+  .wait-num{font-size:32px;font-weight:800;color:#00d4aa;min-width:60px;}
+  .wait-name{font-size:20px;color:#c9d1d9;}
+  .clock{position:fixed;bottom:20px;right:30px;font-size:16px;color:#555;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
+  .pulse{animation:pulse 1.2s ease-in-out 2;}
+</style>
+</head>
+<body>
+<div class="board-wrap">
+  <div class="now-serving">
+    <div class="ns-label">🔔 Now Serving</div>
+    <div id="ns-content"><div class="ns-empty">Waiting for next patient…</div></div>
+  </div>
+  <div class="waiting-panel">
+    <h2>⏳ Up Next</h2>
+    <div id="waiting-list"></div>
+  </div>
+</div>
+<div class="clock" id="clock"></div>
+
+<script>
+let lastToken = null;
+
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+async function poll() {
+  try {
+    const res = await fetch("{% url 'doctor:display_board_data' %}");
+    const data = await res.json();
+    const nsEl = document.getElementById('ns-content');
+
+    if (data.now_serving) {
+      const isNew = lastToken !== data.now_serving.token_number;
+      nsEl.innerHTML = `<div class="ns-number${isNew ? ' pulse' : ''}">#${data.now_serving.token_number}</div>
+                         <div class="ns-name">${data.now_serving.patient_name}</div>`;
+      if (isNew) {
+        lastToken = data.now_serving.token_number;
+        // Gentle audio chime on a new call — most browsers allow this
+        // once the page has had any user interaction (e.g. opening it).
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator(); const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = 880; g.gain.value = 0.15;
+          o.start(); setTimeout(() => o.stop(), 350);
+        } catch (e) {}
+      }
+    } else {
+      nsEl.innerHTML = '<div class="ns-empty">Waiting for next patient…</div>';
+    }
+
+    document.getElementById('waiting-list').innerHTML = data.waiting.map(t =>
+      `<div class="wait-item"><div class="wait-num">#${t.token_number}</div><div class="wait-name">${t.patient_name}</div></div>`
+    ).join('') || '<div style="color:#444;font-size:16px;">No one else waiting</div>';
+  } catch (e) { /* silent — just retry next tick */ }
+}
+poll();
+setInterval(poll, 4000);
+</script>
+</body>
+</html>

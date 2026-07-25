@@ -3,8 +3,11 @@ from . import views
 app_name = 'doctor'
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('display-board/', views.display_board, name='display_board'),
+    path('display-board/data/', views.display_board_data, name='display_board_data'),
     path('queue/', views.patient_queue, name='queue'),
     path('queue/<int:token_pk>/call/', views.call_patient, name='call_patient'),
+    path('queue/<int:token_pk>/send-to-lab/', views.send_to_lab_first, name='send_to_lab_first'),
     path('queue/<int:token_pk>/prescribe/', views.prescription_create, name='prescription_create'),
     path('prescriptions/', views.prescription_list, name='prescription_list'),
     path('prescriptions/<int:pk>/', views.prescription_detail, name='prescription_detail'),

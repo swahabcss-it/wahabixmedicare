@@ -43,6 +43,14 @@ class LabOrder(TenantBaseModel):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes = models.TextField(blank=True)
     ordered_at = models.DateTimeField(auto_now_add=True)
+    # Set only when this order came from a doctor's "Send to Lab First"
+    # action (patient tested BEFORE consultation, not alongside a
+    # prescription). Lets the lab automatically return the patient to the
+    # doctor's queue the moment results are ready — no one has to
+    # remember to do that manually.
+    source_token = models.ForeignKey(
+        'reception.Token', on_delete=models.SET_NULL, null=True, blank=True, related_name='lab_referrals'
+    )
     # Auto-created the moment a doctor orders these tests (see
     # apps.doctor.views.prescription_create) so Reception has a ready-made
     # invoice to collect payment for — no separate manual billing step.

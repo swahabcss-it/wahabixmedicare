@@ -29,12 +29,15 @@
             {% if t.temperature %}Temp: {{ t.temperature }}°<br>{% endif %}
             {% if t.weight %}Wt: {{ t.weight }}kg{% endif %}
           </td>
-          <td><span class="badge {% if t.status == 'waiting' %}badge-orange{% elif t.status == 'with_doctor' %}badge-blue{% else %}badge-green{% endif %}">{{ t.get_status_display }}</span></td>
+          <td><span class="badge {% if t.status == 'waiting' %}badge-orange{% elif t.status == 'with_doctor' %}badge-blue{% elif t.status == 'sent_to_lab' %}badge-teal{% else %}badge-green{% endif %}">{% if t.status == 'sent_to_lab' %}🧪 {% endif %}{{ t.get_status_display }}</span></td>
           <td>
             {% if t.status == 'waiting' %}
               <a href="{% url 'doctor:call_patient' t.pk %}" class="btn btn-primary btn-sm" data-confirm="Call {{ t.patient.full_name }} in?">📣 Call In</a>
             {% elif t.status == 'with_doctor' %}
               <a href="{% url 'doctor:prescription_create' t.pk %}" class="btn btn-success btn-sm">📝 Prescribe & Done</a>
+              <a href="{% url 'doctor:send_to_lab_first' t.pk %}" class="btn btn-secondary btn-sm">🧪 Lab First</a>
+            {% elif t.status == 'sent_to_lab' %}
+              <span style="color:var(--text-faint);font-size:12px;">⏳ Awaiting lab</span>
             {% else %}
               <span style="color:var(--text-faint);font-size:12px;">Done</span>
             {% endif %}

@@ -14,6 +14,3 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_wsgi_application()
-
-# Vercel ko entry point dene ke liye yeh line zaroori hai:
-app = application

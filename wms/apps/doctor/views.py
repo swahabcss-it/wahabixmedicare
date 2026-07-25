@@ -22,7 +22,7 @@ def dashboard(request):
     profile = _doctor_profile(request)
     queue = Token.objects.filter(
         clinic=request.clinic, visit_date=today,
-        status__in=['waiting', 'with_doctor']
+        status__in=['waiting', 'with_doctor', 'sent_to_lab']
     ).select_related('patient').order_by('token_number')
     recent_rx = Prescription.objects.filter(clinic=request.clinic).select_related('patient').order_by('-visit_date')[:8]
     context = {
@@ -46,10 +46,111 @@ def patient_queue(request):
 
 
 @role_required('doctor', feature_flag='is_doctor_enabled')
+def send_to_lab_first(request, token_pk):
+    """
+    "Get this test done first, then come back to me" — a quick referral
+    before any prescription is written. Creates the same auto-invoice/
+    lab-order pairing as a full prescription would, but the token goes
+    into 'sent_to_lab' status (visible as its own queue) instead of
+    'done'. The moment the lab marks results complete, the token
+    automatically reappears in the doctor's waiting queue — see
+    apps.laboratory.views.result_entry.
+    """
+    token = get_object_or_404(Token, pk=token_pk, clinic=request.clinic)
+    from apps.laboratory.models import LabTestCatalog
+
+    if request.method == 'POST':
+        test_ids = request.POST.getlist('lab_test_ids')
+        tests = LabTestCatalog.objects.filter(pk__in=test_ids, clinic=request.clinic)
+        if not tests.exists():
+            messages.error(request, 'Select at least one test.')
+            return redirect('doctor:queue')
+
+        import uuid
+        from apps.laboratory.models import LabOrder
+        from apps.billing.models import Invoice, InvoiceItem
+
+        total = sum(t.rate for t in tests)
+        order = LabOrder.objects.create(
+            clinic=request.clinic, patient=token.patient,
+            voucher_code=uuid.uuid4().hex[:8].upper(), total_amount=total,
+            doctor_name=request.user.get_full_name() or request.user.username,
+            notes=f'Pre-consultation referral — Token #{token.token_number}',
+            source_token=token,
+            created_by=request.user,
+        )
+        order.tests.set(tests)
+
+        count = Invoice.objects.filter(clinic=request.clinic).count() + 1
+        inv_no = f"INV{timezone.now().strftime('%Y%m')}{count:04d}"
+        invoice = Invoice.objects.create(
+            clinic=request.clinic, patient=token.patient,
+            invoice_number=inv_no, subtotal=total, total=total,
+            amount_paid=0, status='draft',
+            notes=f'Pre-consultation labs — Dr. {request.user.get_full_name() or request.user.username} — Voucher {order.voucher_code}',
+            created_by=request.user,
+        )
+        for t in tests:
+            InvoiceItem.objects.create(
+                invoice=invoice, description=f'Lab Test — {t.test_name}',
+                quantity=1, unit_price=t.rate, subtotal=t.rate,
+            )
+        order.invoice = invoice
+        order.save(update_fields=['invoice'])
+
+        token.status = 'sent_to_lab'
+        token.save(update_fields=['status'])
+
+        AuditLog.log(f'Token #{token.token_number} sent to lab before consultation (Voucher {order.voucher_code})',
+                     user=request.user, clinic=request.clinic, request=request)
+        messages.success(request, f'{token.patient.full_name} sent to Lab first — Voucher {order.voucher_code}. They\'ll return to your queue automatically once results are ready.')
+        return redirect('doctor:queue')
+
+    catalog = LabTestCatalog.objects.filter(clinic=request.clinic).order_by('category', 'test_name')
+    return render(request, 'doctor/send_to_lab_first.html', {'token': token, 'catalog': catalog})
+
+
+@role_required('doctor', 'receptionist', feature_flag='is_doctor_enabled')
+def display_board(request):
+    """
+    Full-screen waiting-room display — cast this page to a TV/monitor.
+    Shows the current 'now serving' token in large text, plus the next
+    few waiting. Auto-refreshes itself via display_board_data below, no
+    manual reload needed.
+    """
+    return render(request, 'doctor/display_board.html', {})
+
+
+@role_required('doctor', 'receptionist', feature_flag='is_doctor_enabled')
+def display_board_data(request):
+    """Lightweight JSON polled every few seconds by the display board — deliberately tiny, no template rendering cost."""
+    today = timezone.now().date()
+    now_serving = (
+        Token.objects.filter(clinic=request.clinic, visit_date=today, status='with_doctor')
+        .select_related('patient').order_by('-called_at').first()
+    )
+    waiting = (
+        Token.objects.filter(clinic=request.clinic, visit_date=today, status='waiting')
+        .select_related('patient').order_by('token_number')[:6]
+    )
+    return JsonResponse({
+        'now_serving': {
+            'token_number': now_serving.token_number,
+            'patient_name': now_serving.patient.full_name,
+        } if now_serving else None,
+        'waiting': [
+            {'token_number': t.token_number, 'patient_name': t.patient.full_name}
+            for t in waiting
+        ],
+    })
+
+
+@role_required('doctor', feature_flag='is_doctor_enabled')
 def call_patient(request, token_pk):
     token = get_object_or_404(Token, pk=token_pk, clinic=request.clinic)
     token.status = 'with_doctor'
-    token.save()
+    token.called_at = timezone.now()
+    token.save(update_fields=['status', 'called_at'])
     messages.success(request, f'Token #{token.token_number} — {token.patient.full_name} called in.')
     return redirect('doctor:queue')
 

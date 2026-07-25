@@ -167,6 +167,15 @@ def result_entry(request, order_pk):
         AuditLog.log(f'Lab results entered for order {order.voucher_code}', user=request.user, clinic=request.clinic, request=request)
         messages.success(request, f'Results saved for voucher {order.voucher_code}. Order marked complete.')
 
+        # If a doctor sent this patient here BEFORE writing a prescription
+        # ("get this test done, then come back"), automatically return
+        # their token to the waiting queue now that results are ready —
+        # no one has to remember to do this by hand.
+        if order.source_token_id and order.source_token.status == 'sent_to_lab':
+            order.source_token.status = 'waiting'
+            order.source_token.save(update_fields=['status'])
+            messages.info(request, f'Token #{order.source_token.token_number} automatically returned to the Doctor\'s queue.')
+
         from apps.core.services.notifications import notify_lab_report_ready
         notify_lab_report_ready(order)
         return redirect('laboratory:order_list')

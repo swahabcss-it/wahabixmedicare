@@ -1,7 +1,6 @@
 from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
-import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +26,25 @@ for _local_host in ('localhost', '127.0.0.1', '0.0.0.0'):
     if _local_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_local_host)
 
+# CSRF_TRUSTED_ORIGINS — Django 4+ rejects any POST whose Origin header
+# isn't in this list, even if the host itself is in ALLOWED_HOSTS. This
+# broke Patient Portal (and every other) login on real deployments like
+# Render/Railway/a real domain with "CSRF verification failed. Request
+# aborted." the moment DEBUG was False, because nothing was ever added
+# here. Auto-derived from ALLOWED_HOSTS so any real domain you add there
+# is automatically trusted too — plus an explicit env var for anything
+# extra (e.g. a custom domain that differs from ALLOWED_HOSTS).
+CSRF_TRUSTED_ORIGINS = [
+    f'https://{h}' for h in ALLOWED_HOSTS if h not in ('localhost', '127.0.0.1', '0.0.0.0')
+] + [
+    f'http://{h}' for h in ('localhost', '127.0.0.1')
+]
+CSRF_TRUSTED_ORIGINS += config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+# Render (and similar platforms) proxy HTTPS to the app over plain HTTP
+# internally — without this, Django thinks every request is insecure and
+# CSRF/secure-cookie checks fail even though the browser really is on https.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Shows the quick-login demo buttons on the login page. Independent of
 # DEBUG on purpose — flipping DEBUG for any reason shouldn't silently
 # hide/show unrelated test tooling. Defaults ON; set to False (or just
@@ -40,8 +58,7 @@ if BASE_DOMAIN:
     ALLOWED_HOSTS.append(f'.{BASE_DOMAIN}')
 
 # Shared secret for Direct Analyzer Interfacing webhook (Lab machines push results here).
-#ANALYZER_API_KEY = config('ANALYZER_API_KEY', default='')
-ANALYZER_API_KEY = config('ANALYZER_API_KEY', default='wahabix-medicare-default-analyzer-key')
+ANALYZER_API_KEY = config('ANALYZER_API_KEY', default='')
 
 # WhatsApp notifications — see apps/core/services/notifications.py.
 # Empty by default (safe no-op) until you have a real WhatsApp Business
@@ -130,39 +147,9 @@ TIME_ZONE = 'Asia/Karachi'
 USE_I18N = True
 USE_TZ = True
 
-
-# STATIC FILES CONFIGURATION
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-# Static Files Compression for Super Fast Loading
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
-# Static file caching (Browser fast load karega)
-WHITENOISE_MAX_AGE = 31536000  # 1 year caching
-# Django 4.2+ / 5.0+ Storage Setting
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
-#STATIC_URL = '/static/'
-#STATICFILES_DIRS = [BASE_DIR / 'static']
-#STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # This app has repeatedly broken with "no CSS at all" whenever DEBUG=False
 # and `collectstatic` hadn't been run — WhiteNoise's default Manifest
@@ -232,7 +219,7 @@ LOGIN_ATTEMPT_WINDOW_SECONDS = config('LOGIN_ATTEMPT_WINDOW_SECONDS', default=30
 
 # ── App metadata ─────────────────────────────────────────────────────────
 APP_NAME = "Wahabix Medicare Solution"
-APP_VERSION = "1.0"
+APP_VERSION = "4.7"
 APP_DEVELOPER = "WAHABIX (Shah Abdul Wahab)"
 APP_YEAR = "2026"
 
