@@ -13,7 +13,8 @@ SECRET_KEY = config(
     default='dev-only-fallback-key-CHANGE-ME-before-any-public-deployment-9f8a7b6c5d4e3f2a1b'
 )
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', cast=Csv())
+#ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0', cast=Csv())
+ALLOWED_HOSTS = ['.vercel.app', '.now.sh', '127.0.0.1', 'localhost']
 
 # Local development hosts are ALWAYS allowed, no matter what .env says.
 # This app repeatedly broke with "Bad Request (400)" because ALLOWED_HOSTS
