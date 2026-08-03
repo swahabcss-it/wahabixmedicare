@@ -1,0 +1,46 @@
+{% extends 'base/base.html' %}
+{% block title %}Manage Staff{% endblock %}
+{% block nav_ca_staff %}active{% endblock %}
+{% block page_title %}Staff Management{% endblock %}
+{% block page_subtitle %}Your clinic's staff accounts{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'clinic_admin:staff_create' %}" class="btn btn-primary btn-sm">➕ Add Staff</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">👥 All Staff</div>
+    <div class="search-bar" style="width:240px;">
+      <span class="search-bar-icon">🔍</span>
+      <input type="text" id="staff-search" placeholder="Search staff...">
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="staff-table">
+      <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for s in staff %}
+        <tr>
+          <td class="td-mono">{{ forloop.counter }}</td>
+          <td class="td-primary">{{ s.user.get_full_name|default:s.user.username }}</td>
+          <td class="td-mono">{{ s.user.username }}</td>
+          <td><span class="badge badge-blue">{{ s.get_role_display }}</span></td>
+          <td>{{ s.phone|default:"—" }}</td>
+          <td>{% if s.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+          <td>
+            {% if s.role != 'clinic_admin' or s.user == request.user %}
+            <a href="{% url 'clinic_admin:staff_edit' s.pk %}" class="btn btn-secondary btn-sm">✏️ Edit</a>
+            {% else %}
+            <span style="font-size:11px;color:var(--text-faint);">Managed by Super Admin</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-title">No Staff Yet</div><a href="{% url 'clinic_admin:staff_create' %}" class="btn btn-primary btn-sm">Add Staff</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('staff-search','staff-table',[1,2,3,4]);</script>{% endblock %}

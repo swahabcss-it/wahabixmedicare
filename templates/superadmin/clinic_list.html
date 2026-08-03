@@ -1,0 +1,95 @@
+{% extends 'base/base.html' %}
+{% block title %}Clinics{% endblock %}
+{% block nav_sa_clinics %}active{% endblock %}
+{% block page_title %}All Clinics{% endblock %}
+{% block page_subtitle %}Manage all registered tenant clinics{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'superadmin:clinic_create' %}" class="btn btn-primary btn-sm">➕ Add Clinic</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">🏥 Clinic Tenants</div>
+      <div class="card-subtitle"><span id="clinic-table-count"></span></div>
+    </div>
+    <div class="search-bar" style="width:240px;">
+      <span class="search-bar-icon">🔍</span>
+      <input type="text" id="clinic-search" placeholder="Search by name, phone...">
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="clinic-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Clinic</th><th>Contact</th><th>Address</th>
+          <th>Plan</th><th>Modules</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for clinic in clinics %}
+        <tr>
+          <td class="td-mono">{{ forloop.counter }}</td>
+          <td>
+            <div class="td-primary">{{ clinic.name }}</div>
+            <div style="font-size:11px;color:var(--text-faint);">ID-{{ clinic.pk }} · {{ clinic.slug }}</div>
+          </td>
+          <td>
+            <div>📞 {{ clinic.phone }}</div>
+            {% if clinic.email %}<div style="font-size:11px;color:var(--text-muted);">✉️ {{ clinic.email }}</div>{% endif %}
+          </td>
+          <td style="max-width:150px;font-size:13px;">{{ clinic.address|truncatechars:45 }}</td>
+          <td>
+            <span class="badge {% if clinic.plan == 'enterprise' %}badge-teal{% elif clinic.plan == 'professional' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ clinic.get_plan_display }}
+            </span>
+          </td>
+          <td>
+            <div class="pill-group">
+              {% if clinic.is_lab_enabled %}<span class="pill">🔬</span>{% endif %}
+              {% if clinic.is_pharmacy_enabled %}<span class="pill">💊</span>{% endif %}
+              {% if clinic.is_hr_enabled %}<span class="pill">👥</span>{% endif %}
+              {% if clinic.is_reception_enabled %}<span class="pill">🏪</span>{% endif %}
+              {% if clinic.is_doctor_enabled %}<span class="pill">👨‍⚕️</span>{% endif %}
+              {% if clinic.is_billing_enabled %}<span class="pill">💳</span>{% endif %}
+              {% if clinic.is_assets_enabled %}<span class="pill">🛠️</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            {% if clinic.is_suspended %}<span class="badge badge-red">🚫 Suspended</span>
+            {% elif clinic.is_active %}<span class="badge badge-green">✅ Active</span>
+            {% else %}<span class="badge badge-orange">⚠️ Inactive</span>{% endif %}
+          </td>
+          <td>
+            <div class="td-actions">
+              <a href="{% url 'superadmin:clinic_enter' clinic.pk %}" class="btn btn-primary btn-sm" title="Enter clinic and access all modules">⚡ Enter</a>
+              <a href="{% url 'superadmin:clinic_detail' clinic.pk %}" class="btn btn-secondary btn-sm">👁️</a>
+              <a href="{% url 'superadmin:clinic_edit' clinic.pk %}" class="btn btn-secondary btn-sm">✏️</a>
+              <a href="{% url 'superadmin:clinic_toggle_suspend' clinic.pk %}"
+                data-confirm="{% if clinic.is_suspended %}Activate {{ clinic.name }}?{% else %}Suspend {{ clinic.name }}?{% endif %}"
+                class="btn {% if clinic.is_suspended %}btn-success{% else %}btn-danger{% endif %} btn-sm">
+                {% if clinic.is_suspended %}▶️{% else %}⛔{% endif %}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <div class="empty-state-icon">🏥</div>
+            <div class="empty-state-title">No Clinics Registered</div>
+            <a href="{% url 'superadmin:clinic_create' %}" class="btn btn-primary">➕ Add First Clinic</a>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>wmsTableSearch('clinic-search','clinic-table',[1,2,3]);</script>
+{% endblock %}

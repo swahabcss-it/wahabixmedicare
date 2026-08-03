@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% block title %}Billing{% endblock %}
+{% block nav_billing %}active{% endblock %}
+{% block page_title %}Billing & Accounts{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'billing:invoice_create' %}" class="btn btn-primary btn-sm">➕ New Invoice</a>
+  <a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary btn-sm">📋 All Invoices</a>
+{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon blue">📄</div><div><div class="stat-num" data-target="{{ total_invoices }}">0</div><div class="stat-label">Total Invoices</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-num" data-target="{{ paid_today }}">0</div><div class="stat-label">Paid Today</div></div></div>
+  <div class="stat-card"><div class="stat-icon orange">⏳</div><div><div class="stat-num" data-target="{{ pending }}">0</div><div class="stat-label">Pending</div></div></div>
+  <div class="stat-card"><div class="stat-icon teal">💰</div><div><div class="stat-num">Rs.{{ revenue_today|floatformat:0 }}</div><div class="stat-label">Revenue Today</div></div></div>
+</div>
+<div class="card">
+  <div class="card-header"><div class="card-title">📄 Recent Invoices</div><a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary btn-sm">View All</a></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Invoice#</th><th>Patient</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Date</th><th></th></tr></thead>
+      <tbody>
+        {% for inv in recent_invoices %}
+        <tr>
+          <td class="td-mono">{{ inv.invoice_number }}</td>
+          <td class="td-primary">{{ inv.patient.full_name }}</td>
+          <td>Rs.{{ inv.total|floatformat:0 }}</td>
+          <td style="color:var(--success)">Rs.{{ inv.amount_paid|floatformat:0 }}</td>
+          <td style="color:{% if inv.balance_due > 0 %}var(--danger){% else %}var(--success){% endif %};font-weight:700;">Rs.{{ inv.balance_due|floatformat:0 }}</td>
+          <td><span class="badge {% if inv.status == 'paid' %}badge-green{% elif inv.status == 'partial' %}badge-orange{% elif inv.status == 'cancelled' %}badge-red{% else %}badge-gray{% endif %}">{{ inv.get_status_display }}</span></td>
+          <td style="font-size:12px;">{{ inv.created_at|date:"d M Y" }}</td>
+          <td><a href="{% url 'billing:invoice_detail' inv.pk %}" class="btn btn-secondary btn-sm">👁️</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-title">No invoices yet</div><a href="{% url 'billing:invoice_create' %}" class="btn btn-primary btn-sm">Create First Invoice</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

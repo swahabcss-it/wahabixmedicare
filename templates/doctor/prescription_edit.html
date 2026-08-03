@@ -1,0 +1,87 @@
+{% extends 'base/base.html' %}
+{% block title %}Edit Prescription{% endblock %}
+{% block nav_prescriptions %}active{% endblock %}
+{% block page_title %}Edit Prescription — RX-{{ rx.pk|stringformat:"04d" }}{% endblock %}
+{% block page_subtitle %}{{ rx.patient.full_name }} — {{ rx.visit_date|date:"d M Y" }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:prescription_detail' rx.pk %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+
+{% if rx.lab_order or rx.dispatched_to_pharmacy %}
+<div class="alert alert-warning" style="margin-bottom:16px;">
+  ⚠️ This prescription already dispatched to
+  {% if rx.lab_order %}<b>Laboratory</b> (Voucher {{ rx.lab_order.voucher_code }}){% endif %}
+  {% if rx.lab_order and rx.dispatched_to_pharmacy %} and {% endif %}
+  {% if rx.dispatched_to_pharmacy %}<b>Pharmacy</b>{% endif %}.
+  Editing here updates the diagnosis/medicines on record only — it will <b>not</b> change or duplicate the lab order or pharmacy invoice already created.
+</div>
+{% endif %}
+
+<div class="card">
+  <form method="POST" id="rx-edit-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Chief Complaint / Symptoms</label>
+        <textarea name="symptoms" class="form-control" rows="2">{{ rx.symptoms }}</textarea>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Diagnosis</label>
+        <textarea name="diagnosis" class="form-control" rows="2">{{ rx.diagnosis }}</textarea>
+      </div>
+      <div class="form-group"><label class="form-label">ICD-11 Code</label><input type="text" name="icd11_code" class="form-control" value="{{ rx.icd11_code }}"></div>
+      <div class="form-group"><label class="form-label">Follow-up Date</label><input type="date" name="follow_up_date" class="form-control" value="{{ rx.follow_up_date|date:'Y-m-d' }}"></div>
+      <div class="form-group full">
+        <label class="form-label">Notes</label>
+        <textarea name="notes" class="form-control" rows="2">{{ rx.notes }}</textarea>
+      </div>
+    </div>
+
+    <div class="card-header" style="margin-top:10px;"><div class="card-title">💊 Medicines</div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addMedRow()">➕ Add Medicine</button>
+    </div>
+    <div id="med-rows">
+      {% for m in medicines %}
+      <div class="med-row" style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.4fr auto;gap:8px;margin-bottom:8px;">
+        <input type="text" name="med_name" class="form-control" placeholder="Medicine name" value="{{ m.medicine_name }}" required>
+        <input type="text" name="med_dosage" class="form-control" placeholder="Dosage" value="{{ m.dosage }}">
+        <input type="text" name="med_freq" class="form-control" placeholder="Frequency" value="{{ m.frequency }}">
+        <input type="text" name="med_duration" class="form-control" placeholder="Duration" value="{{ m.duration }}">
+        <input type="text" name="med_instructions" class="form-control" placeholder="Instructions (Urdu ok)" value="{{ m.instructions }}">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">🗑</button>
+      </div>
+      {% empty %}
+      <div class="med-row" style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.4fr auto;gap:8px;margin-bottom:8px;">
+        <input type="text" name="med_name" class="form-control" placeholder="Medicine name">
+        <input type="text" name="med_dosage" class="form-control" placeholder="Dosage">
+        <input type="text" name="med_freq" class="form-control" placeholder="Frequency">
+        <input type="text" name="med_duration" class="form-control" placeholder="Duration">
+        <input type="text" name="med_instructions" class="form-control" placeholder="Instructions (Urdu ok)">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">🗑</button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="margin-top:16px;">
+      <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+      <a href="{% url 'doctor:prescription_detail' rx.pk %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function addMedRow() {
+  const wrap = document.getElementById('med-rows');
+  const row = document.createElement('div');
+  row.className = 'med-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.4fr auto;gap:8px;margin-bottom:8px;';
+  row.innerHTML = `
+    <input type="text" name="med_name" class="form-control" placeholder="Medicine name">
+    <input type="text" name="med_dosage" class="form-control" placeholder="Dosage">
+    <input type="text" name="med_freq" class="form-control" placeholder="Frequency">
+    <input type="text" name="med_duration" class="form-control" placeholder="Duration">
+    <input type="text" name="med_instructions" class="form-control" placeholder="Instructions (Urdu ok)">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">🗑</button>`;
+  wrap.appendChild(row);
+}
+</script>
+{% endblock %}

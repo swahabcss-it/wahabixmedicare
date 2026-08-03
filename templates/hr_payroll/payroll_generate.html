@@ -1,0 +1,45 @@
+{% extends 'base/base.html' %}
+{% block title %}Generate Payroll{% endblock %}
+{% block nav_payroll %}active{% endblock %}
+{% block page_title %}Generate Payroll{% endblock %}
+{% block page_subtitle %}Create salary slips for all active employees{% endblock %}
+{% block topbar_actions %}<a href="{% url 'hr_payroll:payroll_list' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:900px;">
+  <div class="card-header"><div class="card-title">💰 Monthly Payroll Generation</div></div>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid" style="margin-bottom:20px;">
+      <div class="form-group"><label class="form-label">Month *</label>
+        <select name="month" class="form-control" required>
+          {% for num, name in months %}<option value="{{ num }}" {% if num == current_month %}selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Year *</label><input type="number" name="year" class="form-control" value="{{ current_year }}" min="2020" max="2050" required></div>
+    </div>
+    {% if employees %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Employee</th><th>Basic Salary</th><th>Allowances</th><th>Bonus</th><th>Deductions</th><th>Tax</th></tr></thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td><div class="td-primary">{{ emp.user.get_full_name }}</div><div style="font-size:11px;color:var(--text-faint)">{{ emp.get_department_display }}</div></td>
+            <td style="font-weight:700;">Rs.{{ emp.basic_salary|floatformat:0 }}</td>
+            <td><input type="number" name="allowances_{{ emp.pk }}" class="form-control" style="width:100px;" value="0" min="0" step="0.01"></td>
+            <td><input type="number" name="bonus_{{ emp.pk }}" class="form-control" style="width:100px;" value="0" min="0" step="0.01"></td>
+            <td><input type="number" name="deductions_{{ emp.pk }}" class="form-control" style="width:100px;" value="0" min="0" step="0.01"></td>
+            <td><input type="number" name="tax_{{ emp.pk }}" class="form-control" style="width:100px;" value="0" min="0" step="0.01"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-hint" style="margin:12px 0;">Existing slips for the selected month/year will be skipped automatically.</div>
+    <button type="submit" class="btn btn-success btn-lg" data-confirm="Generate payroll slips for all active employees?">✅ Generate Payroll Slips</button>
+    {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-state-icon">👥</div><div class="empty-state-title">No Active Employees</div><a href="{% url 'hr_payroll:employee_create' %}" class="btn btn-primary btn-sm">Add Employees First</a></div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

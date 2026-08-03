@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+{% block title %}Add Employee{% endblock %}
+{% block nav_employees %}active{% endblock %}
+{% block page_title %}Add Employee{% endblock %}
+{% block topbar_actions %}<a href="{% url 'hr_payroll:employee_list' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-header"><div class="card-title">👤 Employee Details</div></div>
+  <form method="POST" id="emp-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Link to Staff Account *</label>
+        <select name="user_id" class="form-control" required>
+          <option value="">— Select Staff Member —</option>
+          {% for s in staff %}<option value="{{ s.user.pk }}">{{ s.user.get_full_name }} ({{ s.get_role_display }})</option>{% endfor %}
+        </select>
+        <span class="form-hint">Employees must already have a staff login account.</span>
+      </div>
+      <div class="form-group"><label class="form-label">Department *</label>
+        <select name="department" class="form-control" required>
+          <option value="lab">Laboratory</option><option value="pharmacy">Pharmacy</option><option value="reception">Reception</option><option value="doctor">Doctor Room</option><option value="admin">Administration</option><option value="hr">HR & Accounts</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Designation *</label><input type="text" name="designation" class="form-control" required placeholder="e.g. Lab Technician"></div>
+      <div class="form-group"><label class="form-label">CNIC</label><input type="text" name="cnic" class="form-control" placeholder="00000-0000000-0"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" placeholder="+92 300 0000000"></div>
+      <div class="form-group"><label class="form-label">Basic Salary (Rs.) *</label><input type="number" name="basic_salary" step="0.01" class="form-control" required placeholder="e.g. 35000"></div>
+      <div class="form-group"><label class="form-label">Join Date *</label><input type="date" name="join_date" class="form-control" required></div>
+      <div class="form-group full"><label class="form-label">Address</label><textarea name="address" class="form-control" rows="2" placeholder="Home address"></textarea></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-primary" onclick="return wmsValidateForm('emp-form')">➕ Add Employee</button>
+      <a href="{% url 'hr_payroll:employee_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base/base.html' %}
+{% block title %}Send to Lab First{% endblock %}
+{% block nav_queue %}active{% endblock %}
+{% block page_title %}Send to Lab First{% endblock %}
+{% block page_subtitle %}{{ token.patient.full_name }} — Token #{{ token.token_number }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:queue' %}" class="btn btn-secondary btn-sm">← Back to Queue</a>{% endblock %}
+{% block content %}
+<div class="alert alert-info" style="margin-bottom:16px;">
+  ℹ️ Use this when the patient needs a test done <b>before</b> you see them (e.g. fasting blood sugar). They'll
+  go to a "Sent to Lab" state and <b>automatically reappear in your queue</b> the moment results are ready —
+  no separate step needed to bring them back.
+</div>
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-header"><div class="card-title">🧪 Select Tests</div></div>
+    <div style="max-height:420px;overflow-y:auto;">
+      {% regroup catalog by get_category_display as categories %}
+      {% for cat in categories %}
+      <div style="font-weight:700;font-size:12.5px;color:var(--text-faint);text-transform:uppercase;margin:14px 0 6px;">{{ cat.grouper }}</div>
+      {% for t in cat.list %}
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;">
+        <span style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" name="lab_test_ids" value="{{ t.pk }}">
+          <span>{{ t.test_name }}</span>
+        </span>
+        <span style="color:var(--text-faint);font-size:13px;">Rs.{{ t.rate|floatformat:0 }}</span>
+      </label>
+      {% endfor %}
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top:16px;">🧪 Send to Lab</button>
+  </form>
+</div>
+{% endblock %}

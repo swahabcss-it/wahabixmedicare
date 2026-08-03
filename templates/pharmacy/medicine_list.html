@@ -1,0 +1,45 @@
+{% extends 'base/base.html' %}
+{% block title %}Medicines{% endblock %}
+{% block nav_medicines %}active{% endblock %}
+{% block page_title %}Medicine Stock{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'pharmacy:medicine_create' %}" class="btn btn-primary btn-sm">➕ Add Medicine</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">💊 All Medicines</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">🔍</span><input type="text" id="med-search" placeholder="Search medicines…"></div>
+  </div>
+  <div class="table-wrap">
+    <table id="med-table">
+      <thead><tr><th>Name</th><th>Generic</th><th>Brand</th><th>Unit</th><th>Sale Price</th><th>Stock</th><th>Expiry</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for m in medicines %}
+        <tr>
+          <td class="td-primary">{{ m.name }}</td>
+          <td style="font-size:12px;">{{ m.generic_name|default:"—" }}</td>
+          <td style="font-size:12px;">{{ m.brand|default:"—" }}</td>
+          <td><span class="badge badge-gray">{{ m.get_unit_display }}</span></td>
+          <td style="font-weight:700;">Rs.{{ m.sale_price|floatformat:0 }}</td>
+          <td>
+            <span class="badge {% if m.stock_quantity == 0 %}badge-red{% elif m.is_low_stock %}badge-orange{% else %}badge-green{% endif %}">
+              {{ m.stock_quantity }}
+            </span>
+          </td>
+          <td style="font-size:12px;">
+            {% if m.expiry_date %}
+              <span {% if m.is_expired %}style="color:var(--danger);font-weight:700;"{% endif %}>
+                {{ m.expiry_date|date:"M Y" }}{% if m.is_expired %} ⚠️{% endif %}
+              </span>
+            {% else %}—{% endif %}
+          </td>
+          <td><a href="{% url 'pharmacy:medicine_edit' m.pk %}" class="btn btn-secondary btn-sm">✏️ Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💊</div><div class="empty-state-title">No medicines yet</div><a href="{% url 'pharmacy:medicine_create' %}" class="btn btn-primary btn-sm">Add First Medicine</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('med-search','med-table',[0,1,2]);</script>{% endblock %}

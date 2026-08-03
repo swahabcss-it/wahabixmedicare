@@ -1,0 +1,40 @@
+{% extends 'base/base.html' %}
+{% block title %}New Invoice{% endblock %}
+{% block nav_billing %}active{% endblock %}
+{% block page_title %}Create Invoice{% endblock %}
+{% block topbar_actions %}<a href="{% url 'billing:invoice_list' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:800px;">
+  <div class="card-header"><div class="card-title">📄 Invoice Details</div></div>
+  <form method="POST" id="inv-form">
+    {% csrf_token %}
+    <div class="form-group"><label class="form-label">Patient *</label>
+      <select name="patient_id" class="form-control" required>
+        <option value="">— Select Patient —</option>
+        {% for p in patients %}<option value="{{ p.pk }}">{{ p.full_name }} ({{ p.patient_id }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">🏥 Insurance Panel <span style="font-weight:400;color:var(--text-faint);">(auto co-pay split on save)</span></label>
+      <select name="insurance_panel_id" class="form-control">
+        <option value="">— None / Self-Pay —</option>
+        {% for panel in panels %}<option value="{{ panel.pk }}">{{ panel.name }} ({{ panel.co_payment_percent }}% patient co-pay)</option>{% endfor %}
+      </select>
+    </div>
+    <label class="form-label" style="display:block;margin-bottom:8px;">Line Items</label>
+    {% for i in "12345" %}
+    <div style="display:grid;grid-template-columns:3fr 1fr 1fr;gap:8px;margin-bottom:6px;">
+      <input type="text" name="item_desc" class="form-control" placeholder="Description (e.g. Consultation Fee)">
+      <input type="number" name="item_qty" class="form-control" placeholder="Qty" value="1" min="1">
+      <input type="number" name="item_price" class="form-control" placeholder="Unit Price" step="0.01" min="0">
+    </div>
+    {% endfor %}
+    <div class="form-grid" style="margin-top:12px;">
+      <div class="form-group"><label class="form-label">Discount (Rs.)</label><input type="number" name="discount" class="form-control" value="0" min="0" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Tax (%)</label><input type="number" name="tax_pct" class="form-control" value="0" min="0" max="100" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Amount Paid (Rs.)</label><input type="number" name="amount_paid" class="form-control" value="0" min="0" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" name="notes" class="form-control" placeholder="Optional note"></div>
+    </div>
+    <button type="submit" class="btn btn-success btn-lg" style="margin-top:8px;" onclick="return wmsValidateForm('inv-form')">✅ Create Invoice</button>
+  </form>
+</div>
+{% endblock %}

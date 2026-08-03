@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ PLATFORM_THEME|default:'dark' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Wahabix Medicare Solution</title>
+<link rel="stylesheet" href="/static/css/wms-theme.css?v={{ APP_VERSION }}">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px 0;}
+.login-bg{
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 50%, rgba(var(--accent-rgb),.07) 0%, transparent 60%),
+             radial-gradient(ellipse at 80% 20%, rgba(14,165,233,.06) 0%, transparent 60%);
+  pointer-events:none;
+}
+.login-wrap{width:100%;max-width:420px;padding:24px;position:relative;z-index:1;}
+.login-header{text-align:center;margin-bottom:28px;}
+.login-logo{
+  width:64px;height:64px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:18px;margin:0 auto 16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:900;color:#000;
+  box-shadow:0 8px 28px rgba(var(--accent-rgb),.35);
+  letter-spacing:-1px;
+}
+.login-title{font-size:22px;font-weight:800;color:var(--text-h);}
+.login-sub{font-size:13px;color:var(--text-muted);margin-top:4px;}
+.login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;}
+.input-icon-wrap{position:relative;}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;color:var(--text-faint);}
+.form-control.with-icon{padding-left:40px;}
+.btn-login{
+  width:100%;padding:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000;font-weight:800;font-size:15px;
+  border:none;border-radius:var(--radius-sm);cursor:pointer;
+  font-family:inherit;transition:all .2s;
+  box-shadow:0 4px 16px rgba(var(--accent-rgb),.3);
+}
+.btn-login:hover{opacity:.9;transform:translateY(-1px);}
+.login-footer{text-align:center;font-size:12px;color:var(--text-faint);margin-top:20px;line-height:1.8;}
+.login-footer .brand{color:var(--accent);font-weight:700;}
+
+@media(max-width:480px){
+  .login-wrap{padding:12px;max-width:100%;}
+  .login-card{padding:20px;}
+  .login-logo{width:52px;height:52px;font-size:21px;border-radius:14px;}
+  .login-title{font-size:19px;}
+}
+.theme-bar{display:flex;justify-content:center;gap:8px;margin-bottom:20px;}
+.theme-bar button{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s;}
+.theme-bar button:hover{transform:scale(1.2);}
+.theme-bar button.active{border-color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="login-bg"></div>
+
+<div class="login-wrap">
+  <!-- Theme is set platform-wide by Super Admin (Settings -> Theme).
+       No per-user theme picker here anymore, by design. -->
+
+  <div class="login-header">
+    <div class="login-logo">WM</div>
+    <div class="login-title">Wahabix Medicare</div>
+    <div class="login-sub">SaaS Clinic Management Solution</div>
+  </div>
+
+  <div class="login-card">
+    <div style="font-size:15px;font-weight:700;color:var(--text-h);margin-bottom:4px;">Welcome back 👋</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">Sign in to your account to continue</div>
+
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-danger" style="margin-bottom:16px;">❌ {{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" id="login-form">
+      {% csrf_token %}
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">Username</label>
+        <div class="input-icon-wrap">
+          <span class="input-icon">👤</span>
+          <input type="text" name="username" class="form-control with-icon" placeholder="Enter your username" autofocus required>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Password</label>
+        <div class="input-icon-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" name="password" class="form-control with-icon" placeholder="Enter your password" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-login">🔐 Sign In</button>
+    </form>
+
+    {% comment %}
+      ⚠️ TESTING ONLY — REMOVE THIS ENTIRE BLOCK BEFORE GOING LIVE. ⚠️
+      Quick-login buttons for demo/testing so you don't have to type
+      credentials every time. Auto-hidden in production because it's
+      gated by {% if IS_DEBUG %} (settings.DEBUG must be True to show).
+      Still: delete this block + the <script> below once testing is done,
+      don't just rely on DEBUG=False — never ship demo credentials
+      anywhere near a production system.
+    {% endcomment %}
+    {% if SHOW_DEMO_LOGIN %}
+    <div style="margin-top:20px;padding-top:20px;border-top:1px dashed var(--border);">
+      <div style="font-size:11px;color:var(--warning);font-weight:700;margin-bottom:10px;text-align:center;">
+        ⚠️ TESTING MODE — Quick Login (remove before production)
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="wahabix" data-p="Demo@12345">👑 Super Admin</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="admin_demo" data-p="Demo@12345">🏢 Clinic Admin</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="doctor_demo" data-p="Demo@12345">👨‍⚕️ Doctor</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="lab_demo" data-p="Demo@12345">🔬 Lab</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="reception_demo" data-p="Demo@12345">🏪 Reception</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="pharmacy_demo" data-p="Demo@12345">💊 Pharmacy</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="hr_demo" data-p="Demo@12345">👥 HR</button>
+        <button type="button" class="btn btn-secondary btn-sm quick-login" data-u="accounts_demo" data-p="Demo@12345">💰 Accounts</button>
+      </div>
+    </div>
+    <script>
+      // TESTING ONLY — remove this <script> block together with the buttons above.
+      document.querySelectorAll('.quick-login').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          document.querySelector('input[name="username"]').value = btn.dataset.u;
+          document.querySelector('input[name="password"]').value = btn.dataset.p;
+          document.getElementById('login-form').submit();
+        });
+      });
+    </script>
+    {% endif %}
+  </div>
+
+  <div class="login-footer">
+    <div>© {{ APP_YEAR }} <span class="brand">{{ APP_NAME }}</span></div>
+    <div>Developed &amp; Designed by <span class="brand">{{ APP_DEVELOPER }}</span></div>
+    <div style="margin-top:6px;opacity:.6;">Secure · Fast · Reliable</div>
+    <div style="margin-top:10px;"><a href="{% url 'patient_portal:login' %}" style="color:var(--accent);text-decoration:none;font-size:12px;">🧑‍⚕️ Are you a patient? View your records here →</a></div>
+  </div>
+</div>
+
+<script src="/static/js/wms-app.js?v={{ APP_VERSION }}"></script>
+</body>
+</html>

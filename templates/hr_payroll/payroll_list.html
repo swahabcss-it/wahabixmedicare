@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+{% block title %}Payroll{% endblock %}
+{% block nav_payroll %}active{% endblock %}
+{% block page_title %}Payroll Slips{% endblock %}
+{% block topbar_actions %}<a href="{% url 'hr_payroll:payroll_generate' %}" class="btn btn-primary btn-sm">💰 Generate Payroll</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">💰 All Payroll Slips</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Employee</th><th>Month</th><th>Year</th><th class="th-num">Basic</th><th class="th-num">Allowances</th><th class="th-num">Deductions</th><th class="th-num">Net</th><th>Status</th><th>PDF</th></tr></thead>
+      <tbody>
+        {% for s in slips %}
+        <tr>
+          <td class="td-primary">{{ s.employee.user.get_full_name }}</td>
+          <td>{{ s.month }}</td>
+          <td>{{ s.year }}</td>
+          <td class="td-num">Rs.{{ s.basic_salary|floatformat:0 }}</td>
+          <td class="td-num" style="color:var(--success)">+Rs.{{ s.allowances|floatformat:0 }}</td>
+          <td class="td-num" style="color:var(--danger)">-Rs.{{ s.deductions|floatformat:0 }}</td>
+          <td class="td-num">Rs.{{ s.net_salary|floatformat:0 }}</td>
+          <td><span class="badge {% if s.is_paid %}badge-green{% else %}badge-orange{% endif %}">{% if s.is_paid %}Paid{% else %}Pending{% endif %}</span></td>
+          <td><a href="{% url 'hr_payroll:payroll_slip_pdf' s.pk %}" class="btn btn-success btn-sm" target="_blank">📄 PDF</a> <button type="button" class="btn btn-secondary btn-sm" title="Print" onclick="wmsSilentPrint('{% url 'hr_payroll:payroll_slip_pdf' s.pk %}')">🖨️</button></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">No payroll slips yet</div><a href="{% url 'hr_payroll:payroll_generate' %}" class="btn btn-primary btn-sm">Generate Payroll</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

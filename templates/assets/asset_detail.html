@@ -1,0 +1,49 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ asset.name }}{% endblock %}
+{% block nav_assets %}active{% endblock %}
+{% block page_title %}{{ asset.name }}{% endblock %}
+{% block page_subtitle %}{{ asset.asset_tag }} · {{ asset.category.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'assets:service_log_create' asset.pk %}" class="btn btn-primary btn-sm">🔧 Log Service</a>
+{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon blue">💵</div><div><div class="stat-num">Rs.{{ asset.purchase_cost|floatformat:0 }}</div><div class="stat-label">Purchase Cost</div></div></div>
+  <div class="stat-card"><div class="stat-icon teal">📉</div><div><div class="stat-num">Rs.{{ asset.accumulated_depreciation|floatformat:0 }}</div><div class="stat-label">Accumulated Depreciation</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">📗</div><div><div class="stat-num">Rs.{{ asset.current_book_value|floatformat:0 }}</div><div class="stat-label">Current Book Value</div></div></div>
+  <div class="stat-card"><div class="stat-icon orange">📅</div><div><div class="stat-num">{{ asset.age_years|floatformat:1 }}y</div><div class="stat-label">Age / {{ asset.useful_life_years }}y life</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">ℹ️ Details</div></div>
+  <table>
+    <tr><td class="td-primary">Location</td><td>{{ asset.location|default:"—" }}</td></tr>
+    <tr><td class="td-primary">Vendor</td><td>{{ asset.vendor|default:"—" }}</td></tr>
+    <tr><td class="td-primary">Serial #</td><td>{{ asset.serial_number|default:"—" }}</td></tr>
+    <tr><td class="td-primary">Warranty</td><td>{% if asset.warranty_active %}<span class="badge badge-green">Active until {{ asset.warranty_expires|date:"d M Y" }}</span>{% else %}<span class="badge badge-gray">Expired / None</span>{% endif %}</td></tr>
+    <tr><td class="td-primary">Status</td><td><span class="badge {% if asset.status == 'in_use' %}badge-green{% elif asset.status == 'under_maintenance' %}badge-orange{% else %}badge-gray{% endif %}">{{ asset.get_status_display }}</span></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">🔧 Service History</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Type</th><th>Performed By</th><th>Cost</th><th>Next Due</th></tr></thead>
+      <tbody>
+        {% for log in service_logs %}
+        <tr>
+          <td>{{ log.service_date|date:"d M Y" }}</td>
+          <td>{{ log.get_service_type_display }}</td>
+          <td>{{ log.performed_by|default:"—" }}</td>
+          <td>Rs.{{ log.cost|floatformat:0 }}</td>
+          <td style="{% if log.is_overdue %}color:var(--danger);font-weight:700;{% endif %}">{{ log.next_service_due|date:"d M Y"|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5"><div class="empty-state"><div class="empty-state-title">No service records yet</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

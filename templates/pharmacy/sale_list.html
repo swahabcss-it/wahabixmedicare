@@ -1,0 +1,34 @@
+{% extends 'base/base.html' %}
+{% block title %}Sales{% endblock %}
+{% block nav_sales %}active{% endblock %}
+{% block page_title %}Pharmacy Sales{% endblock %}
+{% block page_subtitle %}All sales records{% endblock %}
+{% block topbar_actions %}<a href="{% url 'pharmacy:sale_create' %}" class="btn btn-primary btn-sm">🧾 New Sale</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">🧾 All Sales</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">🔍</span><input type="text" id="sale-search" placeholder="Search by invoice or patient…"></div>
+  </div>
+  <div class="table-wrap">
+    <table id="sale-table">
+      <thead><tr><th>Invoice</th><th>Patient</th><th class="th-num">Subtotal</th><th class="th-num">Discount</th><th class="th-num">Total</th><th>Status</th><th>Date</th><th>PDF</th></tr></thead>
+      <tbody>
+        {% for s in sales %}
+        <tr>
+          <td class="td-mono">{{ s.invoice_number }}</td>
+          <td>{{ s.patient_name|default:"Walk-in" }}</td>
+          <td class="td-num">Rs.{{ s.subtotal|floatformat:0 }}</td>
+          <td class="td-num" style="color:var(--danger)">{% if s.discount %}-Rs.{{ s.discount|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="td-num">Rs.{{ s.total|floatformat:0 }}</td>
+          <td><span class="badge {% if s.status == 'paid' %}badge-green{% else %}badge-orange{% endif %}">{{ s.get_status_display }}</span></td>
+          <td style="font-size:12px;">{{ s.created_at|date:"d M Y, H:i" }}</td>
+          <td><a href="{% url 'pharmacy:sale_pdf' s.pk %}" class="btn btn-success btn-sm" target="_blank" title="View PDF">📄</a> <a href="{% url 'pharmacy:sale_pdf' s.pk %}?download=1" class="btn btn-secondary btn-sm" title="Download PDF">⬇️</a> <button type="button" class="btn btn-secondary btn-sm" title="Print" onclick="wmsSilentPrint('{% url 'pharmacy:sale_pdf' s.pk %}')">🖨️</button></td>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🧾</div><div class="empty-state-title">No sales yet</div><a href="{% url 'pharmacy:sale_create' %}" class="btn btn-primary btn-sm">Create First Sale</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('sale-search','sale-table',[0,1]);</script>{% endblock %}

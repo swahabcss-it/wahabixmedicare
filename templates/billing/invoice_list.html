@@ -1,0 +1,34 @@
+{% extends 'base/base.html' %}
+{% block title %}Invoices{% endblock %}
+{% block nav_billing %}active{% endblock %}
+{% block page_title %}All Invoices{% endblock %}
+{% block topbar_actions %}<a href="{% url 'billing:invoice_create' %}" class="btn btn-primary btn-sm">➕ New Invoice</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">📄 Invoices</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">🔍</span><input type="text" id="inv-search" placeholder="Search…"></div>
+  </div>
+  <div class="table-wrap">
+    <table id="inv-table">
+      <thead><tr><th>Invoice#</th><th>Patient</th><th class="th-num">Total</th><th class="th-num">Paid</th><th class="th-num">Balance</th><th style="text-align:center;">Status</th><th>Date</th><th style="text-align:right;">Actions</th></tr></thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr>
+          <td class="td-mono td-primary">{{ inv.invoice_number }}</td>
+          <td class="td-primary">{{ inv.patient.full_name }}</td>
+          <td class="td-num">Rs.{{ inv.total|floatformat:0 }}</td>
+          <td class="td-num">Rs.{{ inv.amount_paid|floatformat:0 }}</td>
+          <td class="td-num" style="color:{% if inv.balance_due > 0 %}var(--danger){% else %}var(--success){% endif %};">Rs.{{ inv.balance_due|floatformat:0 }}</td>
+          <td style="text-align:center;"><span class="badge {% if inv.status == 'paid' %}badge-green{% elif inv.status == 'partial' %}badge-orange{% elif inv.status == 'cancelled' %}badge-red{% else %}badge-gray{% endif %}">{{ inv.get_status_display }}</span></td>
+          <td class="td-nowrap" style="font-size:12px;color:var(--text-faint);">{{ inv.created_at|date:"d M Y" }}</td>
+          <td style="text-align:right;white-space:nowrap;"><a href="{% url 'billing:invoice_detail' inv.pk %}" class="btn btn-secondary btn-sm">👁️</a> <a href="{% url 'billing:invoice_pdf' inv.pk %}?download=1" class="btn btn-secondary btn-sm" title="Download PDF">⬇️</a> <button type="button" class="btn btn-secondary btn-sm" title="Print" onclick="wmsSilentPrint('{% url 'billing:invoice_pdf' inv.pk %}')">🖨️</button></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-title">No invoices</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('inv-search','inv-table',[0,1]);</script>{% endblock %}

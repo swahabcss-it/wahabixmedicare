@@ -1,0 +1,38 @@
+{% extends 'base/base.html' %}
+{% block title %}Assets{% endblock %}
+{% block nav_assets %}active{% endblock %}
+{% block page_title %}Asset Management{% endblock %}
+{% block page_subtitle %}{{ current_clinic.name }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'assets:asset_create' %}" class="btn btn-primary btn-sm">➕ Register Asset</a>
+  <a href="{% url 'assets:asset_list' %}" class="btn btn-secondary btn-sm">🛠️ All Assets</a>
+{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon blue">🛠️</div><div><div class="stat-num" data-target="{{ total_assets }}">0</div><div class="stat-label">Total Assets</div></div></div>
+  <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-num" data-target="{{ in_use }}">0</div><div class="stat-label">In Use</div></div></div>
+  <div class="stat-card"><div class="stat-icon orange">🔧</div><div><div class="stat-num" data-target="{{ under_maintenance }}">0</div><div class="stat-label">Under Maintenance</div></div></div>
+  <div class="stat-card"><div class="stat-icon teal">💰</div><div><div class="stat-num">Rs.{{ total_book_value|floatformat:0 }}</div><div class="stat-label">Total Book Value</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">⚠️ Overdue Service / Calibration</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Asset</th><th>Location</th><th>Due Date</th><th></th></tr></thead>
+      <tbody>
+        {% for log in overdue_services %}
+        <tr>
+          <td class="td-primary">{{ log.asset.name }}</td>
+          <td>{{ log.asset.location }}</td>
+          <td style="color:var(--danger);font-weight:700;">{{ log.next_service_due|date:"d M Y" }}</td>
+          <td><a href="{% url 'assets:asset_detail' log.asset.pk %}" class="btn btn-secondary btn-sm">👁️</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">Nothing overdue</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

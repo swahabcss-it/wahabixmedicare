@@ -1,0 +1,31 @@
+{% extends 'base/base.html' %}
+{% block title %}Token Queue{% endblock %}
+{% block nav_tokens %}active{% endblock %}
+{% block page_title %}Token Queue{% endblock %}
+{% block page_subtitle %}{{ today|date:"l, d M Y" }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'reception:token_create' %}" class="btn btn-primary btn-sm">New Token</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">Today Queue</div><span style="font-size:12px;color:var(--text-muted);">{{ tokens.count }} tokens</span></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Patient</th><th>BP</th><th>Temp</th><th>Weight</th><th>Pulse</th><th class="th-num">Fee</th><th>Invoice</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for t in tokens %}<tr>
+      <td><span class="badge badge-blue" style="font-size:14px;font-weight:800;">#{{ t.token_number }}</span></td>
+      <td class="td-primary">{{ t.patient.full_name }}<br><small style="color:var(--text-faint)">{{ t.patient.patient_id }}</small></td>
+      <td style="font-size:12px;">{{ t.blood_pressure|default:"&mdash;" }}</td>
+      <td style="font-size:12px;">{{ t.temperature|default:"&mdash;" }}</td>
+      <td style="font-size:12px;">{{ t.weight|default:"&mdash;" }}</td>
+      <td style="font-size:12px;">{{ t.pulse|default:"&mdash;" }}</td>
+      <td class="td-num">Rs.{{ t.fee_paid }}</td>
+      <td>{% if t.invoice %}<span class="badge badge-teal">{{ t.invoice.invoice_number }}</span>{% else %}<span style="color:var(--text-faint);">—</span>{% endif %}</td>
+      <td>{% if t.status == 'waiting' %}<span class="badge badge-orange">Waiting</span>
+          {% elif t.status == 'with_doctor' %}<span class="badge badge-blue">With Doctor</span>
+          {% elif t.status == 'done' %}<span class="badge badge-green">Done</span>
+          {% else %}<span class="badge badge-gray">Cancelled</span>{% endif %}</td>
+      <td><button type="button" class="btn btn-secondary btn-sm" onclick="wmsSilentPrint('{% url 'reception:token_print' t.pk %}')">🖨️ Print</button></td>
+    </tr>{% empty %}
+    <tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">&#127895;</div><div class="empty-state-title">No Tokens Yet Today</div><a href="{% url 'reception:token_create' %}" class="btn btn-primary btn-sm">Issue Token</a></div></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

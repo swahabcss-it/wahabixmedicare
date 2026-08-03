@@ -1,0 +1,46 @@
+{% extends 'base/base.html' %}
+{% block title %}Clinic Settings{% endblock %}
+{% block nav_ca_profile %}active{% endblock %}
+{% block page_title %}Clinic Settings{% endblock %}
+{% block page_subtitle %}Update your clinic's public details{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-header">
+    <div>
+      <div class="card-title">🏥 {{ clinic.name }}</div>
+      <div class="card-subtitle">Fields marked * are required</div>
+    </div>
+    <span class="badge {% if clinic.plan == 'enterprise' %}badge-teal{% elif clinic.plan == 'professional' %}badge-blue{% else %}badge-gray{% endif %}">{{ clinic.get_plan_display }} Plan</span>
+  </div>
+  <form method="POST" enctype="multipart/form-data" id="profile-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Clinic Name *</label>
+        <input type="text" name="name" class="form-control" value="{{ clinic.name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number *</label>
+        <input type="tel" name="phone" class="form-control" value="{{ clinic.phone }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" class="form-control" value="{{ clinic.email|default:'' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Clinic Logo</label>
+        <input type="file" name="logo" class="form-control" accept="image/*" style="padding:8px;">
+        {% if clinic.logo %}<div style="font-size:11px;color:var(--accent);margin-top:4px;">✓ Current logo uploaded</div>{% endif %}
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Address *</label>
+        <textarea name="address" class="form-control" rows="2" required>{{ clinic.address }}</textarea>
+      </div>
+    </div>
+    <div class="form-hint" style="margin:14px 0;">Subscription plan and module entitlements can only be changed by Wahabix Support.</div>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button type="submit" class="btn btn-primary" onclick="return wmsValidateForm('profile-form')">💾 Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

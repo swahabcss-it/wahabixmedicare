@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ patient.full_name }}{% endblock %}
+{% block nav_patients %}active{% endblock %}
+{% block page_title %}{{ patient.full_name }}{% endblock %}
+{% block page_subtitle %}Patient ID: {{ patient.patient_id }}{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'reception:token_create' %}?patient={{ patient.pk }}" class="btn btn-primary btn-sm">Issue Token</a>
+  <a href="{% url 'reception:generate_portal_access' patient.pk %}" class="btn btn-secondary btn-sm">🔑 Portal Access</a>
+  <a href="{% url 'reception:patient_list' %}" class="btn btn-secondary btn-sm">Back</a>
+{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Patient Info</div></div>
+    <table class="info-table" style="width:100%;">
+      <tr><td>Patient ID</td><td><span class="badge badge-teal">{{ patient.patient_id }}</span></td></tr>
+      <tr><td>Name</td><td class="td-primary">{{ patient.full_name }}</td></tr>
+      <tr><td>Age / Gender</td><td>{{ patient.age }} years / {{ patient.get_gender_display }}</td></tr>
+      <tr><td>Phone</td><td>{{ patient.phone }}</td></tr>
+      <tr><td>CNIC</td><td>{{ patient.cnic|default:"&mdash;" }}</td></tr>
+      <tr><td>Blood Group</td><td>{% if patient.blood_group %}<span class="badge badge-red">{{ patient.blood_group }}</span>{% else %}&mdash;{% endif %}</td></tr>
+      <tr><td>Email</td><td>{{ patient.email|default:"&mdash;" }}</td></tr>
+      <tr><td>Allergies</td><td style="color:var(--warning);">{{ patient.allergies|default:"None known" }}</td></tr>
+      <tr><td>Registered</td><td>{{ patient.created_at|date:"d M Y" }}</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Visit History</div></div>
+    {% if tokens %}<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Token</th><th>Status</th><th>Fee</th></tr></thead>
+      <tbody>{% for t in tokens %}<tr>
+        <td style="font-size:12px;">{{ t.visit_date|date:"d M Y" }}</td>
+        <td><span class="badge badge-blue">#{{ t.token_number }}</span></td>
+        <td>{% if t.status == 'done' %}<span class="badge badge-green">Done</span>{% elif t.status == 'waiting' %}<span class="badge badge-orange">Waiting</span>{% else %}<span class="badge badge-gray">{{ t.get_status_display }}</span>{% endif %}</td>
+        <td>Rs.{{ t.fee_paid }}</td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state" style="padding:32px;"><div class="empty-state-icon">&#127895;</div><div class="empty-state-title">No Visits Yet</div></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

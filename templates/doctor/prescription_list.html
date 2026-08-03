@@ -1,0 +1,33 @@
+{% extends 'base/base.html' %}
+{% block title %}Prescriptions{% endblock %}
+{% block nav_doctor %}active{% endblock %}
+{% block page_title %}Prescriptions{% endblock %}
+{% block page_subtitle %}All prescriptions at {{ current_clinic.name }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'doctor:dashboard' %}" class="btn btn-secondary btn-sm">← Dashboard</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><div class="card-title">📋 All Prescriptions</div>
+    <div class="search-bar" style="width:240px;"><span class="search-bar-icon">🔍</span><input type="text" id="rx-search" placeholder="Search…"></div>
+  </div>
+  <div class="table-wrap">
+    <table id="rx-table">
+      <thead><tr><th>RX#</th><th>Patient</th><th>Doctor</th><th>Diagnosis</th><th>Date</th><th></th></tr></thead>
+      <tbody>
+        {% for rx in prescriptions %}
+        <tr>
+          <td class="td-mono">RX-{{ rx.pk|stringformat:"04d" }}</td>
+          <td class="td-primary">{{ rx.patient.full_name }}</td>
+          <td>{{ rx.doctor.user.get_full_name|default:"—" }}</td>
+          <td>{{ rx.diagnosis|truncatechars:45 }}</td>
+          <td style="font-size:12px;">{{ rx.visit_date|date:"d M Y" }}</td>
+          <td><a href="{% url 'doctor:prescription_detail' rx.pk %}" class="btn btn-secondary btn-sm">👁️</a> <a href="{% url 'doctor:prescription_print' rx.pk %}" class="btn btn-primary btn-sm" target="_blank">🖨️</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No prescriptions yet</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>wmsTableSearch('rx-search','rx-table',[1,2,3]);</script>{% endblock %}

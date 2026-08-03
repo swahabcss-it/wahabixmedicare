@@ -1,0 +1,106 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ action }} Staff{% endblock %}
+{% block nav_sa_staff %}active{% endblock %}
+{% block page_title %}{{ action }} Staff Member{% endblock %}
+{% block page_subtitle %}{% if action == 'Create' %}Create new clinic staff account{% else %}Update account details, role, or password{% endif %}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'superadmin:staff_list' %}" class="btn btn-secondary btn-sm">← Back</a>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-header"><div class="card-title">{% if action == 'Create' %}👤 New Staff Member{% else %}✏️ Edit Staff Member{% endif %}</div></div>
+  <form method="POST" id="staff-form">
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">First Name *</label>
+        <input type="text" name="first_name" class="form-control" value="{{ staff.user.first_name|default:'' }}" placeholder="First name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name *</label>
+        <input type="text" name="last_name" class="form-control" value="{{ staff.user.last_name|default:'' }}" placeholder="Last name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username *</label>
+        <input type="text" name="username" class="form-control" value="{{ staff.user.username|default:'' }}" placeholder="Login username" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">{% if action == 'Create' %}Password *{% else %}New Password{% endif %}</label>
+        <input type="password" name="password" class="form-control" placeholder="{% if action == 'Create' %}Set password{% else %}Leave blank to keep current{% endif %}" {% if action == 'Create' %}required{% endif %}>
+        {% if action == 'Edit' %}<span class="form-hint">Only fill this in if you want to reset the password.</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="{{ staff.user.email|default:'' }}" placeholder="staff@clinic.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="tel" name="phone" class="form-control" value="{{ staff.phone|default:'' }}" placeholder="+92 300 0000000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CNIC</label>
+        <input type="text" name="cnic" class="form-control" value="{{ staff.cnic|default:'' }}" placeholder="00000-0000000-0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assign Clinic *</label>
+        <select name="clinic" class="form-control" required>
+          <option value="">— Select Clinic —</option>
+          {% for c in clinics %}
+          <option value="{{ c.pk }}" {% if staff and staff.clinic_id == c.pk %}selected{% elif not staff and preselect == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role *</label>
+        <select name="role" class="form-control" required>
+          <option value="">— Select Role —</option>
+          <option value="clinic_admin" {% if staff.role == 'clinic_admin' %}selected{% endif %}>Clinic Admin</option>
+          <option value="doctor" {% if staff.role == 'doctor' %}selected{% endif %}>Doctor</option>
+          <option value="lab_supervisor" {% if staff.role == 'lab_supervisor' %}selected{% endif %}>Lab Supervisor</option>
+          <option value="pharmacist" {% if staff.role == 'pharmacist' %}selected{% endif %}>Pharmacist</option>
+          <option value="receptionist" {% if staff.role == 'receptionist' %}selected{% endif %}>Receptionist</option>
+          <option value="hr_manager" {% if staff.role == 'hr_manager' %}selected{% endif %}>HR Manager</option>
+          <option value="accountant" {% if staff.role == 'accountant' %}selected{% endif %}>Accountant</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Additional Modules (Multi-Module Access)</label>
+        <span class="form-hint" style="display:block;margin-bottom:8px;">Let this person also work inside OTHER modules without changing their primary role/dashboard above.</span>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:500px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="clinic_admin" {% if 'clinic_admin' in staff_extra_roles %}checked{% endif %}> Clinic Admin</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="doctor" {% if 'doctor' in staff_extra_roles %}checked{% endif %}> Doctor</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="lab_supervisor" {% if 'lab_supervisor' in staff_extra_roles %}checked{% endif %}> Lab Supervisor</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="pharmacist" {% if 'pharmacist' in staff_extra_roles %}checked{% endif %}> Pharmacist</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="receptionist" {% if 'receptionist' in staff_extra_roles %}checked{% endif %}> Receptionist</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="hr_manager" {% if 'hr_manager' in staff_extra_roles %}checked{% endif %}> HR Manager</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-body);"><input type="checkbox" name="extra_roles" value="accountant" {% if 'accountant' in staff_extra_roles %}checked{% endif %}> Accountant</label>
+        </div>
+      </div>
+      <div class="form-group full">
+        <div class="toggle-row" style="max-width:400px;">
+          <div><div class="toggle-label-text">🔬 Allow Lab Result Deletion</div><div style="font-size:11px;color:var(--text-faint);">Only for Lab Supervisors</div></div>
+          <label class="toggle-switch"><input type="checkbox" name="can_delete_lab_results" {% if staff.can_delete_lab_results %}checked{% endif %}><span class="toggle-track"></span></label>
+        </div>
+      </div>
+      <div class="form-group full">
+        <div class="toggle-row" style="max-width:400px;">
+          <div><div class="toggle-label-text">🧾 Can Access Billing / Invoices</div><div style="font-size:11px;color:var(--text-faint);">Lets them view/create/print invoices without full Accountant access.</div></div>
+          <label class="toggle-switch"><input type="checkbox" name="can_access_billing" {% if staff.can_access_billing %}checked{% endif %}><span class="toggle-track"></span></label>
+        </div>
+      </div>
+      {% if action == 'Edit' %}
+      <div class="form-group full">
+        <div class="toggle-row" style="max-width:400px;">
+          <div><div class="toggle-label-text">✅ Account Active</div><div style="font-size:11px;color:var(--text-faint);">Turn off to block this account from logging in</div></div>
+          <label class="toggle-switch"><input type="checkbox" name="is_active" {% if staff.is_active %}checked{% endif %}><span class="toggle-track"></span></label>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-primary" onclick="return wmsValidateForm('staff-form')">
+        {% if action == 'Create' %}➕ Create Staff Member{% else %}💾 Save Changes{% endif %}
+      </button>
+      <a href="{% url 'superadmin:staff_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

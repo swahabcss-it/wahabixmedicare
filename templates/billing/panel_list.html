@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}
+{% block title %}Insurance Panels{% endblock %}
+{% block nav_billing %}active{% endblock %}
+{% block page_title %}Insurance Panels{% endblock %}
+{% block page_subtitle %}Co-payment agreements used for automatic claim scrubbing{% endblock %}
+{% block topbar_actions %}<a href="{% url 'billing:claim_list' %}" class="btn btn-secondary btn-sm">View Claims</a>{% endblock %}
+{% block content %}
+<div class="split-grid" style="--split:1fr 1.4fr;">
+  <div class="card" style="align-self:start;">
+    <div class="card-header"><div class="card-title">+ Add Panel</div></div>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group"><label class="form-label">Panel / Insurer Name *</label><input type="text" name="name" class="form-control" required placeholder="e.g. State Life"></div>
+      <div class="form-group"><label class="form-label">Patient Co-Payment % *</label><input type="number" name="co_payment_percent" class="form-control" value="20" min="0" max="100" step="0.01" required></div>
+      <div class="form-group"><label class="form-label">Contact Person</label><input type="text" name="contact_person" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Contact Phone</label><input type="text" name="contact_phone" class="form-control"></div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Save Panel</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">🏥 Active Panels</div></div>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Name</th><th>Co-Pay %</th><th>Contact</th></tr></thead>
+      <tbody>
+        {% for p in panels %}
+        <tr><td class="td-primary">{{ p.name }}</td><td>{{ p.co_payment_percent }}%</td><td style="font-size:12px;">{{ p.contact_person|default:"—" }} {% if p.contact_phone %}· {{ p.contact_phone }}{% endif %}</td></tr>
+        {% empty %}<tr><td colspan="3" style="color:var(--text-faint);">No panels yet.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+{% endblock %}

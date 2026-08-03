@@ -1,0 +1,192 @@
+{% extends 'base/base.html' %}
+{% block title %}SuperAdmin Dashboard{% endblock %}
+{% block nav_sa_dash %}active{% endblock %}
+{% block page_title %}Super Admin Dashboard{% endblock %}
+{% block page_subtitle %}System Overview — Wahabix Medicare SaaS{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'superadmin:clinic_create' %}" class="btn btn-primary btn-sm">➕ New Clinic</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">🏥</div>
+    <div>
+      <div class="stat-num" data-target="{{ total_clinics }}">0</div>
+      <div class="stat-label">Total Clinics</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">✅</div>
+    <div>
+      <div class="stat-num" data-target="{{ active_clinics }}">0</div>
+      <div class="stat-label">Active Clinics</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red">🚫</div>
+    <div>
+      <div class="stat-num" data-target="{{ suspended_clinics }}">0</div>
+      <div class="stat-label">Suspended</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">👥</div>
+    <div>
+      <div class="stat-num" data-target="{{ total_staff }}">0</div>
+      <div class="stat-label">Total Staff</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple">👤</div>
+    <div>
+      <div class="stat-num" data-target="{{ total_patients }}">0</div>
+      <div class="stat-label">Total Patients</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon teal">📋</div>
+    <div>
+      <div class="stat-num" data-target="{{ total_logs }}">0</div>
+      <div class="stat-label">Audit Logs</div>
+    </div>
+  </div>
+</div>
+
+<!-- CLINIC TABLE -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">🏥 Registered Clinics</div>
+      <div class="card-subtitle">All tenant clinics in the system</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="search-bar" style="width:220px;">
+        <span class="search-bar-icon">🔍</span>
+        <input type="text" id="clinic-search" placeholder="Search clinics...">
+      </div>
+      <a href="{% url 'superadmin:clinic_list' %}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="clinic-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Clinic</th>
+          <th>Contact</th>
+          <th>Plan</th>
+          <th>Modules</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for clinic in clinics %}
+        <tr>
+          <td class="td-mono">{{ forloop.counter }}</td>
+          <td>
+            <div class="td-primary">{{ clinic.name }}</div>
+            <div style="font-size:11px;color:var(--text-faint);">{{ clinic.slug }}</div>
+          </td>
+          <td>
+            <div>{{ clinic.phone }}</div>
+            {% if clinic.email %}<div style="font-size:12px;color:var(--text-muted);">{{ clinic.email }}</div>{% endif %}
+          </td>
+          <td>
+            <span class="badge {% if clinic.plan == 'enterprise' %}badge-teal{% elif clinic.plan == 'professional' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ clinic.get_plan_display }}
+            </span>
+          </td>
+          <td>
+            <div class="pill-group">
+              {% if clinic.is_lab_enabled %}<span class="pill">🔬 Lab</span>{% endif %}
+              {% if clinic.is_pharmacy_enabled %}<span class="pill">💊 Rx</span>{% endif %}
+              {% if clinic.is_hr_enabled %}<span class="pill">👥 HR</span>{% endif %}
+              {% if clinic.is_reception_enabled %}<span class="pill">🏪 Rec</span>{% endif %}
+              {% if clinic.is_doctor_enabled %}<span class="pill">👨‍⚕️ Dr</span>{% endif %}
+              {% if clinic.is_billing_enabled %}<span class="pill">💳 Bill</span>{% endif %}
+              {% if clinic.is_assets_enabled %}<span class="pill">🛠️ Assets</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            {% if clinic.is_suspended %}
+              <span class="badge badge-red">🚫 Suspended</span>
+            {% elif clinic.is_active %}
+              <span class="badge badge-green">✅ Active</span>
+            {% else %}
+              <span class="badge badge-orange">⚠️ Inactive</span>
+            {% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--text-faint);">{{ clinic.created_at|date:"d M Y" }}</td>
+          <td>
+            <div class="td-actions">
+              <a href="{% url 'superadmin:clinic_detail' clinic.pk %}" class="btn btn-secondary btn-sm">👁️</a>
+              <a href="{% url 'superadmin:clinic_edit' clinic.pk %}" class="btn btn-secondary btn-sm">✏️</a>
+              <a href="{% url 'superadmin:clinic_toggle_suspend' clinic.pk %}"
+                data-confirm="{% if clinic.is_suspended %}Activate {{ clinic.name }}?{% else %}Suspend {{ clinic.name }}? Staff will lose access.{% endif %}"
+                {% if not clinic.is_suspended %}data-danger="true"{% else %}data-danger="false"{% endif %}
+                class="btn {% if clinic.is_suspended %}btn-success{% else %}btn-danger{% endif %} btn-sm">
+                {% if clinic.is_suspended %}▶️{% else %}⛔{% endif %}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <div class="empty-state-icon">🏥</div>
+            <div class="empty-state-title">No Clinics Yet</div>
+            <div class="empty-state-text">Register the first clinic tenant to get started.</div>
+            <a href="{% url 'superadmin:clinic_create' %}" class="btn btn-primary">➕ Add First Clinic</a>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- RECENT AUDIT LOGS -->
+<div class="card" style="margin-top:20px;">
+  <div class="card-header">
+    <div>
+      <div class="card-title">📋 Recent Activity</div>
+      <div class="card-subtitle">Last system audit entries</div>
+    </div>
+    <a href="{% url 'superadmin:audit_logs' %}" class="btn btn-secondary btn-sm">View All Logs</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>User</th><th>Action</th><th>Clinic</th><th>IP</th></tr>
+      </thead>
+      <tbody>
+        {% for log in recent_logs %}
+        <tr>
+          <td style="font-size:12px;white-space:nowrap;">{{ log.timestamp|date:"d M, H:i" }}</td>
+          <td><span class="badge badge-blue">{{ log.user|default:"System" }}</span></td>
+          <td class="td-primary">{{ log.action }}</td>
+          <td style="font-size:12px;">{{ log.clinic|default:"—" }}</td>
+          <td class="td-mono" style="font-size:11px;">{{ log.ip_address|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-faint);">No audit logs yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  wmsTableSearch('clinic-search', 'clinic-table', [1,2]);
+</script>
+{% endblock %}

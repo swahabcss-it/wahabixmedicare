@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% block title %}Patient Portal Access{% endblock %}
+{% block nav_patients %}active{% endblock %}
+{% block page_title %}Patient Portal Access{% endblock %}
+{% block page_subtitle %}{{ patient.full_name }} — {{ patient.patient_id }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;">
+  {% if new_password %}
+    <div class="alert alert-success">✅ Portal access ready — write this down or print it for the patient now. It won't be shown again.</div>
+    <div style="text-align:center;padding:20px;background:rgba(var(--accent-rgb),.06);border:1px dashed var(--accent);border-radius:12px;margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Patient Portal Login</div>
+      <div style="font-size:13px;color:var(--text-faint);">Patient ID</div>
+      <div style="font-size:22px;font-weight:800;color:var(--text-h);margin-bottom:10px;">{{ patient.patient_id }}</div>
+      <div style="font-size:13px;color:var(--text-faint);">Password</div>
+      <div style="font-size:22px;font-weight:800;color:var(--accent);letter-spacing:2px;">{{ new_password }}</div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);">Portal URL: <code>/patient-portal/login/</code> — patients can view their prescriptions, lab reports, and invoices there.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Print This Slip</button>
+      <a href="{% url 'reception:token_create' %}?patient={{ patient.pk }}" class="btn btn-primary btn-sm">🎫 Issue Token Now</a>
+      <a href="{% url 'reception:patient_detail' patient.pk %}" class="btn btn-secondary btn-sm">👤 View Patient Profile</a>
+      <a href="{% url 'reception:patient_list' %}" class="btn btn-secondary btn-sm">📋 Patient List</a>
+    </div>
+  {% else %}
+    <p style="color:var(--text-muted);font-size:14px;">
+      Generate a Patient Portal password for <b>{{ patient.full_name }}</b>. They'll be able to log in with their
+      Patient ID (<code>{{ patient.patient_id }}</code>) and this password to view their own prescriptions, lab
+      reports, and invoices online.
+    </p>
+    {% if patient.portal_password_hash %}
+      <div class="alert alert-warning">⚠️ This patient already has portal access set up. Generating a new password will replace the old one — they'll need the new one to log in.</div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary" data-confirm="Generate {% if patient.portal_password_hash %}a new{% else %}a{% endif %} portal password for {{ patient.full_name }}?">
+        🔑 {% if patient.portal_password_hash %}Reset{% else %}Generate{% endif %} Portal Password
+      </button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}
